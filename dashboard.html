@@ -460,6 +460,11 @@
     cursor: pointer;
     position: relative;
   }
+  .gap-card.sobrecosto-card { border-color: rgba(255, 77, 77, 0.55); }
+  .gap-card.sobrecosto-card:hover { border-color: var(--red); }
+  .gap-card.ahorro-card { border-color: rgba(20, 211, 154, 0.25); }
+  .gap-card.ahorro-card.has-ahorro { border-color: rgba(20, 211, 154, 0.55); }
+  .gap-card.ahorro-card.has-ahorro:hover { border-color: var(--green); }
   .gap-card:hover { border-color: var(--accent); border-width: 1.5px; }
   .gap-card.balance-card { cursor: default; }
   .gap-card.balance-card.deficit { border-color: rgba(239, 68, 68, 0.4); }
@@ -1239,7 +1244,7 @@
         </div>
       </div>
 
-      <div class="gap-card" onclick="openModal('sobrecosto')">
+      <div class="gap-card sobrecosto-card" onclick="openModal('sobrecosto')">
         <div class="gap-card-head">
           <div>
             <p class="lbl">Sobrecosto acumulado</p>
@@ -1301,7 +1306,7 @@
         <p class="click-hint" style="visibility: hidden;">.</p>
       </div>
 
-      <div class="gap-card" onclick="openModal('ahorro')">
+      <div class="gap-card ahorro-card" id="ahorroCard" onclick="openModal('ahorro')">
         <div class="gap-card-head">
           <div>
             <p class="lbl">Ahorro acumulado</p>
@@ -1933,6 +1938,10 @@ function renderAhorroCard(tCurr, tPrev, itemsCurr, itemsPrev) {
   const valEl = document.getElementById('ahorroValEl');
   valEl.classList.remove('muted', 'success', 'danger');
   valEl.classList.add(tCurr.ahorro > 0 ? 'success' : 'muted');
+  const ahorroCard = document.getElementById('ahorroCard');
+  if (ahorroCard) {
+    ahorroCard.classList.toggle('has-ahorro', tCurr.ahorro > 0);
+  }
 
   const delta = tCurr.ahorro - tPrev.ahorro;
   const pill = document.getElementById('ahorroPill');
@@ -2447,16 +2456,36 @@ function buildGruposPieData(data) {
   return arr;
 }
 
-function buildProveedoresPieData(subitems) {
+function buildProveedoresPieData(subitems, globalProyeccion) {
+  // Suma de proyeccion por proveedor desde subitems
   const m = new Map();
+  let subitemsTotal = 0;
   (subitems || []).forEach(s => {
+    const proy = s.proyeccion || 0;
+    if (proy === 0) return;
     const prov = (s.proveedor || '').trim() || 'Por Definir';
-    m.set(prov, (m.get(prov) || 0) + (s.proyeccion || 0));
+    m.set(prov, (m.get(prov) || 0) + proy);
+    subitemsTotal += proy;
   });
+
+  // Diferencia: proyeccion global menos lo cubierto por subitems
+  // Esto cubre ítems sin subitems + subitems sin proyeccion asignada
+  if (globalProyeccion !== undefined) {
+    const sinAsignar = (globalProyeccion || 0) - subitemsTotal;
+    if (sinAsignar > 0.01) {
+      m.set('Por Definir', (m.get('Por Definir') || 0) + sinAsignar);
+    }
+  }
+
   return [...m.entries()]
     .map(([name, value]) => ({ name, value }))
     .filter(r => r.value > 0)
-    .sort((a, b) => b.value - a.value);
+    .sort((a, b) => {
+      // "Por Definir" siempre al final
+      if (a.name === 'Por Definir') return 1;
+      if (b.name === 'Por Definir') return -1;
+      return b.value - a.value;
+    });
 }
 
 function drawPie(canvas, items, options = {}) {
@@ -2528,8 +2557,8 @@ function renderPies(view) {
     </div>
   `).join('') || '<div style="font-size:11px; color: var(--text-3);">Sin datos</div>';
 
-  // Pie 2: Proyección por proveedor (subitems)
-  const sobreData = buildProveedoresPieData(view.curr.subitems);
+  // Pie 2: Proyección por proveedor (subitems + diferencia = proyección global)
+  const sobreData = buildProveedoresPieData(view.curr.subitems, view.curr.totals.proyeccion);
   const totalProvProy = sobreData.reduce((s, r) => s + r.value, 0);
   drawPie(document.getElementById('pieSobreCanvas'), sobreData);
   document.getElementById('pieSobreCenterVal').textContent = fmtQ(totalProvProy);
@@ -2557,7 +2586,7 @@ function openPieModal(type) {
     lblCenter = 'Total proyectado';
   } else {
     title = 'Proyección por Proveedor';
-    items = buildProveedoresPieData(dataCurr.subitems);
+    items = buildProveedoresPieData(dataCurr.subitems, dataCurr.totals.proyeccion);
     total = items.reduce((s, r) => s + r.value, 0);
     lblCenter = 'Sobrecosto total';
   }
@@ -2592,7 +2621,7 @@ function closePieModalOnBackdrop(e) {
 window.addEventListener('resize', () => {
   if (dataCurr && dataPrev) {
     drawPie(document.getElementById('pieGruposCanvas'), buildGruposPieData(dataCurr));
-    drawPie(document.getElementById('pieSobreCanvas'), buildProveedoresPieData(dataCurr.subitems));
+    drawPie(document.getElementById('pieSobreCanvas'), buildProveedoresPieData(dataCurr.subitems, dataCurr.totals.proyeccion));
     if (pieModalCurrent) {
       drawPie(document.getElementById('pieModalCanvas'), pieModalCurrent.items, { innerRatio: 0.55 });
     }
