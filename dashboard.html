@@ -507,7 +507,8 @@
     max-width: 220px;
     border-radius: 24px;
     overflow: hidden;
-    border: 1px solid var(--border);
+    border: 2px solid rgba(255,255,255,0.35);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 8px 32px rgba(0,0,0,0.4), 0 0 24px rgba(99,102,241,0.25);
     transform-style: preserve-3d;
     animation: logoFloat 5.5s ease-in-out infinite;
   }
@@ -520,7 +521,7 @@
   .logo-static::after {
     content: '';
     position: absolute; inset: 0;
-    background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.18) 50%, transparent 65%);
+    background: linear-gradient(115deg, transparent 25%, rgba(255,255,255,0.55) 50%, transparent 75%);
     z-index: 2; pointer-events: none;
     animation: logoShine 4s ease-in-out infinite;
   }
