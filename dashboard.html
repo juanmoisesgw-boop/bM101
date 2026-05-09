@@ -100,7 +100,24 @@
     font-size: 12px; font-weight: 700; letter-spacing: 0.6px;
     text-transform: uppercase;
     font-feature-settings: 'tnum';
-    cursor: help;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s;
+    user-select: none;
+  }
+  .iva-badge:hover {
+    background: rgba(251, 191, 36, 0.22);
+    border-color: rgba(251, 191, 36, 0.7);
+  }
+  .iva-badge.iva-off {
+    background: rgba(120, 120, 120, 0.1);
+    border-color: rgba(120, 120, 120, 0.3);
+    color: var(--text-3);
+    text-decoration: line-through;
+    opacity: 0.7;
+  }
+  .iva-badge.iva-off:hover {
+    opacity: 1;
+    background: rgba(120, 120, 120, 0.18);
   }
   .upload-toggle {
     background: var(--surface-2);
@@ -335,12 +352,11 @@
   .baseline-marker {
     position: relative; width: 100%; height: 24px; margin-top: 6px;
   }
-  .baseline-marker .marker {
+  .baseline-marker .marker-tick {
     position: absolute; transform: translateX(-50%);
     display: flex; flex-direction: column; align-items: center;
     pointer-events: none;
   }
-  .baseline-marker .marker.prev { display: none !important; }
   .baseline-marker .tick {
     width: 2px; height: 22px;
     background: var(--text); margin-top: -28px;
@@ -354,10 +370,10 @@
     border: 2px solid var(--bg);
     border-radius: 50%;
   }
-  .baseline-marker .lbl {
+  .baseline-marker .marker-lbl {
+    position: absolute; top: 6px;
     font-size: 12px;
     color: var(--text);
-    margin-top: 6px;
     white-space: nowrap;
     text-transform: uppercase;
     letter-spacing: 0.6px;
@@ -367,8 +383,9 @@
     border-radius: 4px;
     border: 1px solid var(--border-strong);
     font-feature-settings: 'tnum';
+    pointer-events: none;
   }
-  .baseline-marker .lbl span {
+  .baseline-marker .marker-lbl span {
     color: var(--text-2);
     font-weight: 600;
     margin-left: 2px;
@@ -1103,7 +1120,7 @@
       </div>
     </div>
     <div class="topbar-right">
-      <span class="iva-badge" title="Todos los montos de esta versión incluyen 12% de IVA aplicado automáticamente">+ IVA 12%</span>
+      <span class="iva-badge" id="ivaBadge" onclick="toggleIva()" title="IVA activo · haz clic para desactivar" aria-label="Activar/desactivar IVA">+ IVA 12%</span>
       <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="Cambiar tema (claro/oscuro)" aria-label="Cambiar tema">
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
@@ -1163,7 +1180,7 @@
       </div>
       <div class="project-banner-right">
         <div class="label">Control presupuestario</div>
-        <div class="value">bM101 · con IVA 12%</div>
+        <div class="value" id="ivaStatusBanner">bM101 · con IVA 12%</div>
       </div>
     </div>
 
@@ -1212,10 +1229,10 @@
           <div class="seg-pendiente" id="segPendiente"></div>
         </div>
         <div class="baseline-marker">
-          <div class="marker" id="baselineMarker">
+          <div class="marker-tick" id="baselineMarkerTick">
             <div class="tick"></div>
-            <span class="lbl">PPTO base · <span id="pptoBaseChip">Q 0</span></span>
           </div>
+          <div class="marker-lbl" id="baselineMarkerLbl">PPTO base · <span id="pptoBaseChip">Q 0</span></div>
         </div>
 
         <div class="legend">
@@ -1458,6 +1475,7 @@ let dataCurr = null;
 let dataPrevFull = null;
 let dataCurrFull = null;
 let activeGroup = '__ALL__';
+let ivaEnabled = true;
 
 // ════════════════ TEMA (claro/oscuro) ════════════════
 function applyTheme(theme) {
@@ -1498,22 +1516,62 @@ const COL_SUB = {
 };
 
 // ════════════════ IVA ════════════════
-// Los Excel cargados NO incluyen IVA. Se aplica 1.12 una sola vez por cada
-// celda numérica al ingresar desde el archivo. No se aplica nuevamente
-// en agregaciones (aggregate suma valores ya con IVA), ni en deltas, ni en
-// porcentajes (los porcentajes son ratios de valores con IVA, idénticos a
-// los ratios sin IVA porque el factor se cancela).
+// Los Excel cargados NO incluyen IVA. Los valores se almacenan en crudo (sin IVA).
+// El multiplicador se aplica en scaleData() al momento de renderizar, según el
+// estado del toggle ivaEnabled. Así el toggle puede activarse/desactivarse sin
+// necesidad de recargar los archivos.
 const IVA_RATE = 0.12;
 const IVA_MULT = 1 + IVA_RATE;
 
 function numOrZero(v) {
   if (v === null || v === undefined || v === '') return 0;
-  if (typeof v === 'number') return isNaN(v) ? 0 : v * IVA_MULT;
+  if (typeof v === 'number') return isNaN(v) ? 0 : v;
   if (typeof v === 'string') {
     const n = parseFloat(v.replace(/[^\d.\-]/g, ''));
-    return isNaN(n) ? 0 : n * IVA_MULT;
+    return isNaN(n) ? 0 : n;
   }
   return 0;
+}
+
+function scaleData(data, mult) {
+  if (!data) return data;
+  const numFields = ['pptoBase','contratado','ahorro','ahorroDirecto','ahorroProyectado',
+    'pendiente','error','ocAmpliacion','sobregiros','sobrecosto','estPagadas','estPendientes','proyeccion'];
+  const scaleObj = obj => {
+    const out = Object.assign({}, obj);
+    numFields.forEach(k => { if (k in obj) out[k] = (obj[k] || 0) * mult; });
+    return out;
+  };
+  const scaledSubMap = new Map();
+  const subitems = data.subitems.map(s => {
+    const scaled = scaleObj(s);
+    scaledSubMap.set(s, scaled);
+    return scaled;
+  });
+  const items = data.items.map(item => {
+    const scaled = scaleObj(item);
+    scaled.subitems = (item.subitems || []).map(s => scaledSubMap.get(s) || scaleObj(s));
+    return scaled;
+  });
+  return Object.assign({}, data, { items, subitems, totals: aggregate(items) });
+}
+
+function toggleIva() {
+  ivaEnabled = !ivaEnabled;
+  const badge = document.getElementById('ivaBadge');
+  if (ivaEnabled) {
+    badge.classList.remove('iva-off');
+    badge.textContent = '+ IVA 12%';
+    badge.title = 'IVA activo · haz clic para desactivar';
+  } else {
+    badge.classList.add('iva-off');
+    badge.textContent = 'IVA incluido en Excel';
+    badge.title = 'IVA desactivado · el Excel ya incluye IVA · haz clic para activar factor';
+  }
+  const banner = document.getElementById('ivaStatusBanner');
+  if (banner) banner.textContent = ivaEnabled ? 'bM101 · con IVA 12%' : 'bM101 · sin IVA';
+  applyFilter();
+  if (dataPrevFull && dataCurrFull) tryRender();
 }
 
 function toggleUploader() {
@@ -1866,10 +1924,13 @@ function renderBar(tCurr, tPrev) {
     setSeg('segPendiente', (pendCont / barTotal) * 100);
   }
 
-  // Marker PPTO base
+  // Marker PPTO base — tick siempre centrado, etiqueta ajusta su lado según posición
   if (barTotal > 0) {
-    document.getElementById('baselineMarker').style.left =
-      ((ppto / barTotal) * 100) + '%';
+    const pctPos = (ppto / barTotal) * 100;
+    document.getElementById('baselineMarkerTick').style.left = pctPos + '%';
+    const lbl = document.getElementById('baselineMarkerLbl');
+    lbl.style.left = pctPos + '%';
+    lbl.style.transform = pctPos > 75 ? 'translateX(-100%)' : pctPos < 25 ? 'translateX(0)' : 'translateX(-50%)';
   }
   document.getElementById('pptoBaseChip').textContent = fmtQ(ppto);
 
@@ -2424,12 +2485,13 @@ function filterByGroup(data, grupo) {
 
 function applyFilter() {
   if (!dataPrevFull || !dataCurrFull) return;
+  const mult = ivaEnabled ? IVA_MULT : 1;
   if (activeGroup === '__ALL__') {
-    dataPrev = dataPrevFull;
-    dataCurr = dataCurrFull;
+    dataPrev = scaleData(dataPrevFull, mult);
+    dataCurr = scaleData(dataCurrFull, mult);
   } else {
-    dataPrev = filterByGroup(dataPrevFull, activeGroup);
-    dataCurr = filterByGroup(dataCurrFull, activeGroup);
+    dataPrev = scaleData(filterByGroup(dataPrevFull, activeGroup), mult);
+    dataCurr = scaleData(filterByGroup(dataCurrFull, activeGroup), mult);
   }
 }
 
