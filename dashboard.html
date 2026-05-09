@@ -362,14 +362,7 @@
     background: var(--text); margin-top: -28px;
     position: relative;
   }
-  .baseline-marker .tick::before {
-    content: ''; position: absolute;
-    top: -5px; left: -4px;
-    width: 10px; height: 10px;
-    background: var(--text);
-    border: 2px solid var(--bg);
-    border-radius: 50%;
-  }
+  .baseline-marker .tick::before { content: none; }
   .baseline-marker .marker-lbl {
     position: absolute; top: 6px;
     font-size: 12px;
