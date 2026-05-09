@@ -2,7 +2,7 @@
 <html lang="es"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dashboard Presupuestos (con IVA 12%) · bM101 · Light</title>
+<title>Dashboard Presupuestos (con IVA 12%) · bM101</title>
 <style>
   :root {
     --bg: #050506;
@@ -23,6 +23,31 @@
     --amber-soft: rgba(251, 191, 36, 0.16);
     --orange: #fb923c;
   }
+  body.light {
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --surface-2: #f1f2f5;
+    --surface-3: #e5e6eb;
+    --border: #d8dae0;
+    --border-strong: #b4b7c0;
+    --text: #0a0b0e;
+    --text-2: #3a3d45;
+    --text-3: #6a6e78;
+    --accent: #2563eb;
+    --green: #059669;
+    --green-soft: rgba(5, 150, 105, 0.14);
+    --red: #dc2626;
+    --red-soft: rgba(220, 38, 38, 0.12);
+    --amber: #d97706;
+    --amber-soft: rgba(217, 119, 6, 0.14);
+    --orange: #ea580c;
+  }
+  body.light .baseline-marker .tick { background: var(--text); }
+  body.light .baseline-marker .tick::before { background: var(--text); border-color: var(--surface); }
+  body.light .seg-pendiente { background: #e5e6eb; border-left-color: #b4b7c0; }
+  body.light .modal-backdrop { background: rgba(20, 22, 28, 0.55); }
+  body.light .prov-pct-label { color: rgba(255,255,255,0.95); }
+  body.light .upload-slot input[type="file"]::file-selector-button { color: var(--text); }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
@@ -909,6 +934,135 @@
     .shell { padding: 16px; }
     .modal-summary { grid-template-columns: 1fr; }
   }
+
+  /* ═══════ THEME TOGGLE / PRINT BUTTON ═══════ */
+  .icon-btn {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    width: 38px; height: 38px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .icon-btn:hover { background: var(--surface-3); color: var(--text); border-color: var(--border-strong); }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .icon-btn .icon-sun { display: none; }
+  body.light .icon-btn .icon-moon { display: none; }
+  body.light .icon-btn .icon-sun { display: inline; }
+
+  /* ═══════ FILTER ═══════ */
+  .filter-bar {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    flex-wrap: wrap;
+  }
+  .filter-bar label {
+    font-size: 11px; color: var(--text-2);
+    text-transform: uppercase; letter-spacing: 1px; font-weight: 700;
+  }
+  .filter-bar select {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-size: 13px; font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    min-width: 240px;
+  }
+  .filter-bar select:hover { border-color: var(--border-strong); }
+  .filter-bar .filter-info {
+    font-size: 12px; color: var(--text-3);
+    font-feature-settings: 'tnum';
+    margin-left: auto;
+  }
+
+  /* ═══════ SUMMARY TABLE ═══════ */
+  .summary-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 0;
+    margin-top: 20px;
+    overflow: hidden;
+  }
+  .summary-head {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer;
+    user-select: none;
+  }
+  .summary-head:hover { background: var(--surface-2); }
+  .summary-head h2 {
+    font-size: 15px; color: var(--text);
+    text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700;
+  }
+  .summary-head .toggle-icon {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text-2);
+    font-size: 14px;
+    transition: transform 0.2s;
+  }
+  .summary-section.collapsed .toggle-icon { transform: rotate(-90deg); }
+  .summary-section.collapsed .summary-body { display: none; }
+  .summary-body {
+    padding: 0;
+    overflow-x: auto;
+    max-height: 600px;
+    overflow-y: auto;
+  }
+  .summary-body table.detail { min-width: 900px; }
+
+  /* ═══════ PIE CHARTS WRAPPER ═══════ */
+  .pies-row { margin-bottom: 16px; }
+
+  /* ═══════ PRINT ═══════ */
+  @media print {
+    body { background: #fff !important; color: #000 !important; }
+    body, body.light {
+      --bg: #ffffff;
+      --surface: #ffffff;
+      --surface-2: #f5f5f5;
+      --surface-3: #ececec;
+      --border: #c0c0c0;
+      --border-strong: #909090;
+      --text: #000000;
+      --text-2: #333333;
+      --text-3: #666666;
+    }
+    .shell { zoom: 1 !important; padding: 0 !important; max-width: 100% !important; }
+    .topbar, .uploader, .filter-bar, .upload-toggle, .icon-btn,
+    #themeToggle, #printBtn, .click-hint, .hero-deltas-hint,
+    .modal-backdrop, .empty-state { display: none !important; }
+    .hero, .gap-card, .pie-card, .prov-block, .summary-section, .project-banner {
+      break-inside: avoid;
+      box-shadow: none !important;
+      border-color: #c0c0c0 !important;
+    }
+    .summary-section.collapsed .summary-body { display: block !important; }
+    .summary-section .toggle-icon { display: none !important; }
+    .summary-body { max-height: none !important; overflow: visible !important; }
+    .gap-grid, .gap-grid--with-logo {
+      grid-template-columns: 1fr 1fr 1fr !important;
+      gap: 12px !important;
+    }
+    .gap-logo-cell { display: none !important; }
+    .pies-row { grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
+    .logo-static, .logo-static::after { animation: none !important; }
+    @page { size: A4 landscape; margin: 12mm; }
+  }
 </style>
 
 <!-- SheetJS desde CDN -->
@@ -929,6 +1083,13 @@
     </div>
     <div class="topbar-right">
       <span class="iva-badge" title="Todos los montos de esta versión incluyen 12% de IVA aplicado automáticamente">+ IVA 12%</span>
+      <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="Cambiar tema (claro/oscuro)" aria-label="Cambiar tema">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <button class="icon-btn" id="printBtn" onclick="window.print()" title="Imprimir / Guardar PDF" aria-label="Imprimir">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      </button>
       <button class="upload-toggle" onclick="toggleUploader()">
         <span class="dot empty" id="uploadStatusDot"></span>
         <span id="uploadToggleText">Cargar archivos</span>
@@ -962,6 +1123,15 @@
   </div>
 
   <div id="dashboardContent" style="display: none;">
+
+    <!-- Filtro por grupo -->
+    <div class="filter-bar" id="filterBar">
+      <label for="groupFilter">Filtrar por grupo</label>
+      <select id="groupFilter" onchange="onFilterChange()">
+        <option value="__ALL__">Todos los grupos</option>
+      </select>
+      <span class="filter-info" id="filterInfo"></span>
+    </div>
 
     <!-- Banner del Proyecto -->
     <div class="project-banner">
@@ -1163,12 +1333,83 @@
       </div>
     </div>
 
+    <!-- Gráficas Pie -->
+    <div class="section-head">
+      <h2>Composición visual</h2>
+      <span class="meta">Click para expandir</span>
+    </div>
+    <div class="pies-row">
+      <div class="pie-card" onclick="openPieModal('grupos')" title="Ver detalle">
+        <div class="pie-card-head">
+          <h3>Proyección por Grupo</h3>
+          <span class="meta" id="pieGruposMeta"></span>
+        </div>
+        <div class="pie-card-body">
+          <div class="pie-canvas-wrap">
+            <canvas id="pieGruposCanvas" width="220" height="220"></canvas>
+            <div class="pie-center">
+              <div class="pc-val" id="pieGruposCenterVal">Q 0</div>
+              <div class="pc-lbl">Total proyectado</div>
+            </div>
+          </div>
+          <div class="pie-legend" id="pieGruposLegend"></div>
+        </div>
+      </div>
+      <div class="pie-card" onclick="openPieModal('sobrecosto')" title="Ver detalle">
+        <div class="pie-card-head">
+          <h3>Composición de Sobrecosto</h3>
+          <span class="meta" id="pieSobreMeta"></span>
+        </div>
+        <div class="pie-card-body">
+          <div class="pie-canvas-wrap">
+            <canvas id="pieSobreCanvas" width="220" height="220"></canvas>
+            <div class="pie-center">
+              <div class="pc-val" id="pieSobreCenterVal">Q 0</div>
+              <div class="pc-lbl">Sobrecosto total</div>
+            </div>
+          </div>
+          <div class="pie-legend" id="pieSobreLegend"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="section-head">
       <h2>Distribución por proveedor</h2>
       <span class="meta" id="provMeta"></span>
     </div>
     <div class="prov-block" id="provBlock"></div>
 
+    <!-- Tabla resumen de todas las partidas -->
+    <div class="summary-section" id="summarySection">
+      <div class="summary-head" onclick="toggleSummary()">
+        <h2>Resumen completo de partidas</h2>
+        <span class="toggle-icon" id="summaryToggleIcon">▼</span>
+      </div>
+      <div class="summary-body" id="summaryBody"></div>
+    </div>
+
+  </div>
+
+  <!-- Pie modal (full screen) -->
+  <div class="modal-backdrop pie-modal-backdrop" id="pieModalBackdrop" onclick="closePieModalOnBackdrop(event)">
+    <div class="modal pie-modal">
+      <div class="modal-head">
+        <h2 id="pieModalTitle">Detalle</h2>
+        <button class="close-btn" onclick="closePieModal()" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="pie-modal-grid">
+          <div class="pie-modal-canvas-wrap">
+            <canvas id="pieModalCanvas" width="500" height="500"></canvas>
+            <div class="pie-modal-center">
+              <div class="pc-val-big" id="pieModalCenterVal">Q 0</div>
+              <div class="pc-lbl-big" id="pieModalCenterLbl">Total</div>
+            </div>
+          </div>
+          <div class="pie-modal-legend" id="pieModalLegend"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="empty-state" id="emptyState">
@@ -1193,6 +1434,33 @@
 <script>
 let dataPrev = null;
 let dataCurr = null;
+let dataPrevFull = null;
+let dataCurrFull = null;
+let activeGroup = '__ALL__';
+
+// ════════════════ TEMA (claro/oscuro) ════════════════
+function applyTheme(theme) {
+  if (theme === 'light') document.body.classList.add('light');
+  else document.body.classList.remove('light');
+  // Re-render pies para refrescar el "donut hole" (usa color de surface)
+  if (dataPrev && dataCurr) {
+    renderPies({ curr: dataCurr, prev: dataPrev });
+    if (pieModalCurrent) {
+      drawPie(document.getElementById('pieModalCanvas'), pieModalCurrent.items, { innerRatio: 0.55 });
+    }
+  }
+}
+function toggleTheme() {
+  const isLight = document.body.classList.contains('light');
+  const next = isLight ? 'dark' : 'light';
+  try { localStorage.setItem('bm101-theme', next); } catch(e) {}
+  applyTheme(next);
+}
+(function initTheme(){
+  let saved = 'dark';
+  try { saved = localStorage.getItem('bm101-theme') || 'dark'; } catch(e) {}
+  if (saved === 'light') document.body.classList.add('light');
+})();
 
 // Mapeo de columnas para ELEMENTOS PRINCIPALES
 const COL_MAIN = {
@@ -1411,19 +1679,19 @@ function loadFile(e, which) {
       const wb = XLSX.read(ev.target.result, { type: 'array', cellDates: true });
       const parsed = parseMondayExcel(wb);
       if (which === 'prev') {
-        dataPrev = parsed;
+        dataPrevFull = parsed; dataPrev = parsed;
         document.getElementById('filenamePrev').textContent = file.name;
         document.getElementById('filenamePrev').classList.remove('empty');
         document.getElementById('slotPrev').classList.add('loaded');
       } else if (which === 'curr') {
-        dataCurr = parsed;
+        dataCurrFull = parsed; dataCurr = parsed;
         document.getElementById('filenameCurr').textContent = file.name;
         document.getElementById('filenameCurr').classList.remove('empty');
         document.getElementById('slotCurr').classList.add('loaded');
       } else if (which === 'single') {
         // Mismo archivo se usa para ambas semanas
-        dataPrev = parsed;
-        dataCurr = parsed;
+        dataPrevFull = parsed; dataPrev = parsed;
+        dataCurrFull = parsed; dataCurr = parsed;
         const fnameLbl = file.name + ' · usado como ambas semanas';
         document.getElementById('filenameSingle').textContent = fnameLbl;
         document.getElementById('filenameSingle').classList.remove('empty');
@@ -1437,6 +1705,9 @@ function loadFile(e, which) {
         document.getElementById('slotCurr').classList.add('loaded');
       }
       updateUploadStatus();
+      activeGroup = '__ALL__';
+      populateGroupFilter();
+      applyFilter();
       tryRender();
     } catch (err) {
       alert('Error al leer el archivo: ' + err.message);
@@ -1545,6 +1816,11 @@ function tryRender() {
 
   // Proveedores
   renderProveedores(dataCurr);
+
+  // Pies, tabla resumen e info de filtro
+  renderPies({ curr: dataCurr, prev: dataPrev });
+  renderSummary({ curr: dataCurr, prev: dataPrev });
+  updateFilterInfo();
 }
 
 function renderBar(tCurr, tPrev) {
@@ -2086,6 +2362,310 @@ function renderCambiosModal() {
   </tr></tfoot></table>`;
 
   return html;
+}
+
+/* ════════════════════ FILTRO POR GRUPO ════════════════════ */
+function populateGroupFilter() {
+  const sel = document.getElementById('groupFilter');
+  if (!sel || !dataCurrFull) return;
+  const groups = new Set();
+  (dataCurrFull.items || []).forEach(it => groups.add((it.grupo || 'Sin grupo').trim()));
+  (dataPrevFull?.items || []).forEach(it => groups.add((it.grupo || 'Sin grupo').trim()));
+  const sorted = [...groups].sort((a, b) => a.localeCompare(b, 'es'));
+  sel.innerHTML = '<option value="__ALL__">Todos los grupos</option>' +
+    sorted.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
+  sel.value = activeGroup;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[c]);
+}
+
+function filterByGroup(data, grupo) {
+  const items = (data.items || []).filter(i => (i.grupo || 'Sin grupo').trim() === grupo);
+  const itemNames = new Set(items.map(i => i.name));
+  const subitems = (data.subitems || []).filter(s => itemNames.has(s.parentName));
+  return {
+    items, subitems,
+    totals: aggregate(items),
+    projectName: data.projectName
+  };
+}
+
+function applyFilter() {
+  if (!dataPrevFull || !dataCurrFull) return;
+  if (activeGroup === '__ALL__') {
+    dataPrev = dataPrevFull;
+    dataCurr = dataCurrFull;
+  } else {
+    dataPrev = filterByGroup(dataPrevFull, activeGroup);
+    dataCurr = filterByGroup(dataCurrFull, activeGroup);
+  }
+}
+
+function onFilterChange() {
+  const sel = document.getElementById('groupFilter');
+  activeGroup = sel.value;
+  applyFilter();
+  tryRender();
+}
+
+function updateFilterInfo() {
+  const info = document.getElementById('filterInfo');
+  if (!info || !dataCurrFull) return;
+  const totalItems = (dataCurrFull.items || []).length;
+  const shownItems = (dataCurr.items || []).length;
+  if (activeGroup === '__ALL__') {
+    info.textContent = `${totalItems} partidas · todos los grupos`;
+  } else {
+    info.textContent = `${shownItems} de ${totalItems} partidas · grupo activo`;
+  }
+}
+
+/* ════════════════════ PIE CHARTS ════════════════════ */
+const PIE_PALETTE = [
+  '#3b82f6', '#14d39a', '#fbbf24', '#fb923c', '#ff4d4d',
+  '#a78bfa', '#22d3ee', '#f472b6', '#84cc16', '#f97316',
+  '#06b6d4', '#eab308', '#10b981', '#8b5cf6', '#ec4899'
+];
+
+function buildGruposPieData(data) {
+  const m = new Map();
+  (data.items || []).forEach(it => {
+    const g = (it.grupo || 'Sin grupo').trim();
+    m.set(g, (m.get(g) || 0) + (it.proyeccion || 0));
+  });
+  const arr = [...m.entries()]
+    .map(([name, value]) => ({ name, value }))
+    .filter(r => r.value > 0)
+    .sort((a, b) => b.value - a.value);
+  return arr;
+}
+
+function buildSobrecostoPieData(t) {
+  return [
+    { name: 'Errores', value: t.error || 0, color: '#ff4d4d' },
+    { name: 'OC Ampliación', value: t.ocAmpliacion || 0, color: '#fb923c' },
+    { name: 'Sobregiros', value: t.sobregiros || 0, color: '#fbbf24' }
+  ].filter(r => r.value > 0);
+}
+
+function drawPie(canvas, items, options = {}) {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth || 220;
+  const cssH = canvas.clientHeight || 220;
+  if (canvas.width !== cssW * dpr || canvas.height !== cssH * dpr) {
+    canvas.width = cssW * dpr;
+    canvas.height = cssH * dpr;
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cssW, cssH);
+
+  const cx = cssW / 2, cy = cssH / 2;
+  const outerR = Math.min(cssW, cssH) / 2 - 4;
+  const innerR = outerR * (options.innerRatio || 0.62);
+
+  const total = items.reduce((s, r) => s + r.value, 0);
+  if (total <= 0) {
+    ctx.fillStyle = getCssVar('--text-3') || '#888';
+    ctx.font = '12px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Sin datos', cx, cy);
+    return;
+  }
+
+  let start = -Math.PI / 2;
+  items.forEach((r, i) => {
+    const angle = (r.value / total) * Math.PI * 2;
+    const end = start + angle;
+    const color = r.color || PIE_PALETTE[i % PIE_PALETTE.length];
+    r._color = color;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, outerR, start, end);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    start = end;
+  });
+
+  // Donut hole
+  ctx.beginPath();
+  ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+  ctx.fillStyle = getCssVar('--surface') || '#0e0e11';
+  ctx.fill();
+}
+
+function getCssVar(name) {
+  return getComputedStyle(document.body).getPropertyValue(name).trim();
+}
+
+function renderPies(view) {
+  const tCurr = view.curr.totals;
+  // Pie 1: Proyección por grupo
+  const gruposData = buildGruposPieData(view.curr);
+  drawPie(document.getElementById('pieGruposCanvas'), gruposData);
+  document.getElementById('pieGruposCenterVal').textContent = fmtQ(tCurr.proyeccion);
+  document.getElementById('pieGruposMeta').textContent = gruposData.length + ' grupos';
+  const totalG = gruposData.reduce((s, r) => s + r.value, 0);
+  const legG = document.getElementById('pieGruposLegend');
+  legG.innerHTML = gruposData.map(r => `
+    <div class="pie-legend-item">
+      <span class="swatch" style="background:${r._color}"></span>
+      <span class="name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</span>
+      <span class="pct">${totalG > 0 ? ((r.value / totalG) * 100).toFixed(1) : '0'}%</span>
+    </div>
+  `).join('') || '<div style="font-size:11px; color: var(--text-3);">Sin datos</div>';
+
+  // Pie 2: Composición de sobrecosto
+  const sobreData = buildSobrecostoPieData(tCurr);
+  drawPie(document.getElementById('pieSobreCanvas'), sobreData);
+  document.getElementById('pieSobreCenterVal').textContent = fmtQ(tCurr.sobrecosto);
+  document.getElementById('pieSobreMeta').textContent = sobreData.length ? sobreData.length + ' fuentes' : 'Sin datos';
+  const totalS = sobreData.reduce((s, r) => s + r.value, 0);
+  const legS = document.getElementById('pieSobreLegend');
+  legS.innerHTML = sobreData.map(r => `
+    <div class="pie-legend-item">
+      <span class="swatch" style="background:${r._color}"></span>
+      <span class="name">${escapeHtml(r.name)}</span>
+      <span class="pct">${totalS > 0 ? ((r.value / totalS) * 100).toFixed(1) : '0'}%</span>
+    </div>
+  `).join('') || '<div style="font-size:11px; color: var(--text-3);">Sin sobrecosto registrado</div>';
+}
+
+let pieModalCurrent = null;
+function openPieModal(type) {
+  if (!dataCurr) return;
+  let title, items, total, lblCenter;
+  if (type === 'grupos') {
+    title = 'Proyección por Grupo';
+    items = buildGruposPieData(dataCurr);
+    total = items.reduce((s, r) => s + r.value, 0);
+    lblCenter = 'Total proyectado';
+  } else {
+    title = 'Composición de Sobrecosto';
+    items = buildSobrecostoPieData(dataCurr.totals);
+    total = items.reduce((s, r) => s + r.value, 0);
+    lblCenter = 'Sobrecosto total';
+  }
+  pieModalCurrent = { type, items, total };
+  document.getElementById('pieModalTitle').textContent = title;
+  document.getElementById('pieModalCenterVal').textContent = fmtQ(total);
+  document.getElementById('pieModalCenterLbl').textContent = lblCenter;
+  document.getElementById('pieModalBackdrop').classList.add('active');
+  // Esperar al layout para tamaños correctos
+  requestAnimationFrame(() => {
+    drawPie(document.getElementById('pieModalCanvas'), items, { innerRatio: 0.55 });
+    const leg = document.getElementById('pieModalLegend');
+    leg.innerHTML = items.map(r => `
+      <div class="pie-modal-legend-item">
+        <span class="swatch" style="background:${r._color}"></span>
+        <span class="name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</span>
+        <span class="amount">${fmtQ(r.value)}</span>
+        <span class="pct">${total > 0 ? ((r.value / total) * 100).toFixed(1) : '0'}%</span>
+      </div>
+    `).join('') || '<div style="padding: 24px; text-align:center; color: var(--text-3);">Sin datos</div>';
+  });
+}
+
+function closePieModal() {
+  document.getElementById('pieModalBackdrop').classList.remove('active');
+  pieModalCurrent = null;
+}
+function closePieModalOnBackdrop(e) {
+  if (e.target.id === 'pieModalBackdrop') closePieModal();
+}
+
+window.addEventListener('resize', () => {
+  if (dataCurr && dataPrev) {
+    drawPie(document.getElementById('pieGruposCanvas'), buildGruposPieData(dataCurr));
+    drawPie(document.getElementById('pieSobreCanvas'), buildSobrecostoPieData(dataCurr.totals));
+    if (pieModalCurrent) {
+      drawPie(document.getElementById('pieModalCanvas'), pieModalCurrent.items, { innerRatio: 0.55 });
+    }
+  }
+});
+
+/* ════════════════════ TABLA RESUMEN ════════════════════ */
+function toggleSummary() {
+  document.getElementById('summarySection').classList.toggle('collapsed');
+}
+
+function renderSummary(view) {
+  const body = document.getElementById('summaryBody');
+  const items = view.curr.items || [];
+  const prevMap = new Map((view.prev.items || []).map(i => [i.name, i]));
+
+  if (items.length === 0) {
+    body.innerHTML = '<div class="empty-modal">Sin partidas para mostrar.</div>';
+    return;
+  }
+
+  const byGrupo = {};
+  items.forEach(it => {
+    const g = (it.grupo || 'Sin grupo').trim();
+    if (!byGrupo[g]) byGrupo[g] = [];
+    byGrupo[g].push(it);
+  });
+
+  let html = `<table class="detail">
+    <thead><tr>
+      <th>Partida</th>
+      <th class="num">PPTO Base</th>
+      <th class="num">Contratado</th>
+      <th class="num">Ahorro</th>
+      <th class="num">Sobrecosto</th>
+      <th class="num">Pagado</th>
+      <th class="num">Por pagar</th>
+      <th class="num">Proyección</th>
+      <th class="num">Δ vs ant.</th>
+    </tr></thead><tbody>`;
+
+  const groups = Object.keys(byGrupo).sort((a, b) => a.localeCompare(b, 'es'));
+  groups.forEach(grupo => {
+    html += `<tr class="grupo-row"><td colspan="9">${escapeHtml(grupo)}</td></tr>`;
+    byGrupo[grupo].forEach(it => {
+      const prev = prevMap.get(it.name);
+      const dProy = (it.proyeccion || 0) - ((prev && prev.proyeccion) || 0);
+      let dC = 'flat', dT = '=';
+      if (dProy > 0.01) { dC = 'up'; dT = '+' + fmtQ(dProy); }
+      else if (dProy < -0.01) { dC = 'down'; dT = fmtQ(dProy); }
+      html += `<tr>
+        <td>${escapeHtml(it.name)}</td>
+        <td class="num">${fmtQ(it.pptoBase)}</td>
+        <td class="num">${fmtQ(it.contratado)}</td>
+        <td class="num" style="color: ${it.ahorro > 0 ? 'var(--green)' : 'var(--text-2)'};">${fmtQ(it.ahorro)}</td>
+        <td class="num" style="color: ${it.sobrecosto > 0 ? 'var(--red)' : 'var(--text-2)'};">${fmtQ(it.sobrecosto)}</td>
+        <td class="num">${fmtQ(it.estPagadas)}</td>
+        <td class="num">${fmtQ(it.estPendientes)}</td>
+        <td class="num"><b>${fmtQ(it.proyeccion)}</b></td>
+        <td class="num delta-cell ${dC}">${dT}</td>
+      </tr>`;
+    });
+  });
+
+  const t = view.curr.totals, tp = view.prev.totals;
+  const tD = (t.proyeccion || 0) - (tp.proyeccion || 0);
+  let tDC = 'flat', tDT = '=';
+  if (tD > 0.01) { tDC = 'up'; tDT = '+' + fmtQ(tD); }
+  else if (tD < -0.01) { tDC = 'down'; tDT = fmtQ(tD); }
+  html += `<tfoot><tr>
+    <td>Total</td>
+    <td class="num">${fmtQ(t.pptoBase)}</td>
+    <td class="num">${fmtQ(t.contratado)}</td>
+    <td class="num">${fmtQ(t.ahorro)}</td>
+    <td class="num">${fmtQ(t.sobrecosto)}</td>
+    <td class="num">${fmtQ(t.estPagadas)}</td>
+    <td class="num">${fmtQ(t.estPendientes)}</td>
+    <td class="num"><b>${fmtQ(t.proyeccion)}</b></td>
+    <td class="num delta-cell ${tDC}">${tDT}</td>
+  </tr></tfoot></table>`;
+
+  body.innerHTML = html;
 }
 </script>
 
