@@ -61,7 +61,6 @@
     padding: 24px 32px;
     max-width: 100%;
     position: relative;
-    zoom: 1.5;
   }
 
   /* ═══════ TOPBAR ═══════ */
@@ -237,8 +236,8 @@
   .mapper-dialog {
     background: var(--surface); border: 1px solid var(--border-strong);
     border-radius: 12px;
-    width: calc(100vw / 1.5 - 32px); max-width: 620px;
-    height: calc(100vh / 1.5 - 32px); max-height: 560px;
+    width: min(620px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px); height: auto;
     display: flex; flex-direction: column; overflow: hidden;
     box-shadow: 0 24px 60px rgba(0,0,0,0.4);
   }
@@ -642,16 +641,15 @@
     background: rgba(0, 0, 0, 0.85);
     display: none; align-items: center; justify-content: center;
     z-index: 100; padding: 32px;
-    zoom: 1.5;
   }
   .modal-backdrop.active { display: flex; }
   .modal {
     background: var(--surface);
     border: 1.5px solid var(--border-strong);
     border-radius: 16px;
-    width: calc(100vw / 1.5 - 64px);
+    width: 100%;
     max-width: 1100px;
-    height: calc(100vh / 1.5 - 64px);
+    height: 100%;
     max-height: 800px;
     display: flex; flex-direction: column; overflow: hidden;
   }
@@ -932,9 +930,7 @@
     .pie-legend { max-height: none; }
   }
 
-  /* Pie modal — pantalla completa, SIN zoom adicional */
   .pie-modal-backdrop {
-    zoom: 1 !important;
     padding: 24px !important;
   }
   .pie-modal {
@@ -1150,7 +1146,7 @@
       --text-2: #333333;
       --text-3: #666666;
     }
-    .shell { zoom: 1 !important; padding: 0 !important; max-width: 100% !important; }
+    .shell { padding: 0 !important; max-width: 100% !important; }
     .topbar, .uploader, .filter-bar, .upload-toggle, .icon-btn,
     #themeToggle, #printBtn, .click-hint, .hero-deltas-hint,
     .modal-backdrop, .empty-state { display: none !important; }
