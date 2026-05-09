@@ -560,59 +560,74 @@
   .modal-backdrop.active { display: flex; }
   .modal {
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border-strong);
     border-radius: 16px;
-    width: 100%; max-width: 1000px; max-height: 88vh;
+    width: calc(100% - 16px);
+    max-width: 1200px;
+    height: 82vh;
     display: flex; flex-direction: column; overflow: hidden;
   }
   .modal-head {
-    padding: 22px 28px; border-bottom: 1px solid var(--border);
+    padding: 20px 28px; border-bottom: 1px solid var(--border);
     display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
   }
-  .modal-head h2 { font-size: 16px; font-weight: 600; letter-spacing: -0.2px; }
+  .modal-head h2 { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; }
   .modal-head .close-btn {
     background: var(--surface-2);
     border: 1px solid var(--border);
     color: var(--text-2);
-    width: 32px; height: 32px; border-radius: 8px;
+    width: 34px; height: 34px; border-radius: 8px;
     cursor: pointer; font-size: 16px;
     display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
   }
   .modal-head .close-btn:hover { background: var(--surface-3); color: var(--text); }
-  .modal-body { padding: 24px 28px; overflow-y: auto; flex: 1; }
+  .modal-body {
+    padding: 20px 28px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+  }
+  .modal-body::-webkit-scrollbar { width: 8px; }
+  .modal-body::-webkit-scrollbar-track { background: var(--surface-2); }
+  .modal-body::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+  .modal-body::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
   .modal-summary {
     display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 12px; margin-bottom: 24px;
+    gap: 12px; margin-bottom: 20px;
+    flex-shrink: 0;
   }
   .modal-summary-card {
     background: var(--surface-2);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 14px 18px;
+    padding: 16px 20px;
   }
   .modal-summary-card .lbl {
     font-size: 12px; color: var(--text-2);
     text-transform: uppercase; letter-spacing: 1px;
-    font-weight: 700; margin-bottom: 6px;
+    font-weight: 700; margin-bottom: 8px;
   }
   .modal-summary-card .val {
-    font-size: 22px; font-weight: 700;
-    letter-spacing: -0.5px;
+    font-size: 26px; font-weight: 700;
+    letter-spacing: -0.8px;
     font-feature-settings: 'tnum';
   }
 
   table.detail { width: 100%; border-collapse: collapse; font-size: 13px; }
   table.detail th {
-    text-align: left; padding: 12px 10px;
+    text-align: left; padding: 13px 12px;
     font-weight: 700; color: var(--text-2);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 2px solid var(--border-strong);
     font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
     background: var(--surface-2);
+    position: sticky; top: 0; z-index: 2;
   }
   table.detail th.num, table.detail td.num { text-align: right; font-feature-settings: 'tnum'; }
   table.detail td {
-    padding: 12px 10px; border-bottom: 1px solid var(--surface-3);
-    color: var(--text);
+    padding: 13px 12px; border-bottom: 1px solid var(--surface-3);
+    color: var(--text); font-size: 14px;
   }
   table.detail tr:hover td { background: var(--surface-2); }
   table.detail .grupo-row td {
@@ -2456,32 +2471,33 @@ function buildGruposPieData(data) {
   return arr;
 }
 
-function buildProveedoresPieData(subitems, globalProyeccion) {
-  // Suma de proyeccion por proveedor desde subitems
+function buildProveedoresPieData(items, subitems) {
+  // Qué ítems tienen subelementos registrados
+  const itemsWithSubs = new Set((subitems || []).map(s => s.parentName));
+
   const m = new Map();
-  let subitemsTotal = 0;
+
+  // Para ítems CON subelementos: distribuir la proyección por proveedor
+  // usando los valores de cada subelemento individual
   (subitems || []).forEach(s => {
     const proy = s.proyeccion || 0;
-    if (proy === 0) return;
+    if (proy <= 0) return;
     const prov = (s.proveedor || '').trim() || 'Por Definir';
     m.set(prov, (m.get(prov) || 0) + proy);
-    subitemsTotal += proy;
   });
 
-  // Diferencia: proyeccion global menos lo cubierto por subitems
-  // Esto cubre ítems sin subitems + subitems sin proyeccion asignada
-  if (globalProyeccion !== undefined) {
-    const sinAsignar = (globalProyeccion || 0) - subitemsTotal;
-    if (sinAsignar > 0.01) {
-      m.set('Por Definir', (m.get('Por Definir') || 0) + sinAsignar);
-    }
-  }
+  // Para ítems SIN subelementos: su proyección completa va a "Por Definir"
+  (items || []).forEach(it => {
+    if (itemsWithSubs.has(it.name)) return;
+    const proy = it.proyeccion || 0;
+    if (proy <= 0) return;
+    m.set('Por Definir', (m.get('Por Definir') || 0) + proy);
+  });
 
   return [...m.entries()]
     .map(([name, value]) => ({ name, value }))
     .filter(r => r.value > 0)
     .sort((a, b) => {
-      // "Por Definir" siempre al final
       if (a.name === 'Por Definir') return 1;
       if (b.name === 'Por Definir') return -1;
       return b.value - a.value;
@@ -2558,7 +2574,7 @@ function renderPies(view) {
   `).join('') || '<div style="font-size:11px; color: var(--text-3);">Sin datos</div>';
 
   // Pie 2: Proyección por proveedor (subitems + diferencia = proyección global)
-  const sobreData = buildProveedoresPieData(view.curr.subitems, view.curr.totals.proyeccion);
+  const sobreData = buildProveedoresPieData(view.curr.items, view.curr.subitems);
   const totalProvProy = sobreData.reduce((s, r) => s + r.value, 0);
   drawPie(document.getElementById('pieSobreCanvas'), sobreData);
   document.getElementById('pieSobreCenterVal').textContent = fmtQ(totalProvProy);
@@ -2586,7 +2602,7 @@ function openPieModal(type) {
     lblCenter = 'Total proyectado';
   } else {
     title = 'Proyección por Proveedor';
-    items = buildProveedoresPieData(dataCurr.subitems, dataCurr.totals.proyeccion);
+    items = buildProveedoresPieData(dataCurr.items, dataCurr.subitems);
     total = items.reduce((s, r) => s + r.value, 0);
     lblCenter = 'Sobrecosto total';
   }
@@ -2621,7 +2637,7 @@ function closePieModalOnBackdrop(e) {
 window.addEventListener('resize', () => {
   if (dataCurr && dataPrev) {
     drawPie(document.getElementById('pieGruposCanvas'), buildGruposPieData(dataCurr));
-    drawPie(document.getElementById('pieSobreCanvas'), buildProveedoresPieData(dataCurr.subitems, dataCurr.totals.proyeccion));
+    drawPie(document.getElementById('pieSobreCanvas'), buildProveedoresPieData(dataCurr.items, dataCurr.subitems));
     if (pieModalCurrent) {
       drawPie(document.getElementById('pieModalCanvas'), pieModalCurrent.items, { innerRatio: 0.55 });
     }
