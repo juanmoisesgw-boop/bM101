@@ -218,6 +218,71 @@
     font-size: 11px; cursor: pointer; margin-right: 8px;
   }
 
+  /* ═══ MAPPER DE COLUMNAS ═══ */
+  .mapper-btn-wrap { max-width: 560px; margin: 14px auto 0; text-align: center; }
+  .mapper-open-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 18px; border-radius: 8px;
+    background: var(--surface-2); border: 1px solid var(--border-strong);
+    color: var(--text-2); font-size: 12px; font-weight: 600;
+    letter-spacing: 0.4px; cursor: pointer; transition: border-color 0.15s, color 0.15s;
+  }
+  .mapper-open-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .mapper-overlay {
+    display: none; position: fixed; inset: 0; z-index: 2000;
+    background: rgba(0,0,0,0.55); align-items: center; justify-content: center;
+  }
+  .mapper-overlay.open { display: flex; }
+  .mapper-dialog {
+    background: var(--surface); border: 1px solid var(--border-strong);
+    border-radius: 14px; width: min(760px, 96vw);
+    max-height: 88vh; display: flex; flex-direction: column;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+  }
+  .mapper-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 22px 24px 16px; border-bottom: 1px solid var(--border);
+  }
+  .mapper-title { font-size: 16px; font-weight: 700; color: var(--text); }
+  .mapper-subtitle { font-size: 12px; color: var(--text-3); margin-top: 3px; }
+  .mapper-close {
+    background: none; border: none; color: var(--text-3);
+    font-size: 18px; cursor: pointer; padding: 2px 6px; border-radius: 4px;
+  }
+  .mapper-close:hover { color: var(--text); background: var(--surface-2); }
+  .mapper-body { overflow-y: auto; padding: 6px 0; flex: 1; }
+  .mapper-row {
+    display: flex; align-items: center; gap: 16px;
+    padding: 10px 24px; border-bottom: 1px solid var(--border);
+  }
+  .mapper-row:last-child { border-bottom: none; }
+  .mapper-row:hover { background: var(--surface-2); }
+  .mapper-concept { flex: 1; min-width: 0; }
+  .mapper-label { font-size: 12px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.5px; }
+  .mapper-desc { font-size: 11px; color: var(--text-3); margin-top: 2px; line-height: 1.4; }
+  .mapper-select-wrap { position: relative; flex-shrink: 0; width: 260px; display: flex; align-items: center; gap: 6px; }
+  .mapper-auto-badge {
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--accent); border: 1px solid var(--accent); border-radius: 3px;
+    padding: 1px 4px; flex-shrink: 0;
+  }
+  .mapper-select {
+    flex: 1; background: var(--surface-2); border: 1px solid var(--border-strong);
+    color: var(--text); font-size: 12px; padding: 6px 8px; border-radius: 6px;
+    cursor: pointer;
+  }
+  .mapper-select:focus { outline: none; border-color: var(--accent); }
+  .mapper-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px; border-top: 1px solid var(--border); gap: 10px;
+  }
+  .mapper-btn-reset { background: none; border: none; color: var(--text-3); font-size: 12px; cursor: pointer; padding: 6px 10px; border-radius: 6px; }
+  .mapper-btn-reset:hover { color: var(--text-2); background: var(--surface-2); }
+  .mapper-btn-cancel { background: var(--surface-2); border: 1px solid var(--border-strong); color: var(--text-2); font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 8px; cursor: pointer; }
+  .mapper-btn-cancel:hover { border-color: var(--border-strong); color: var(--text); }
+  .mapper-btn-apply { background: var(--accent); border: none; color: #fff; font-size: 13px; font-weight: 700; padding: 8px 22px; border-radius: 8px; cursor: pointer; }
+  .mapper-btn-apply:hover { opacity: 0.88; }
+
   .empty-state {
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
@@ -1151,6 +1216,33 @@
         <input type="file" id="fileSingle" accept=".xlsx">
       </div>
     </div>
+    <div class="mapper-btn-wrap">
+      <button class="mapper-open-btn" id="mapperBtn" onclick="openMapperModal()" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        Equivalencia de columnas
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal de equivalencia de columnas -->
+  <div class="mapper-overlay" id="mapperModal" onclick="if(event.target===this)closeMapperModal()">
+    <div class="mapper-dialog">
+      <div class="mapper-header">
+        <div>
+          <div class="mapper-title">Equivalencia de columnas</div>
+          <div class="mapper-subtitle">Asocia cada concepto del dashboard con la columna correspondiente de tu Excel.</div>
+        </div>
+        <button class="mapper-close" onclick="closeMapperModal()">✕</button>
+      </div>
+      <div class="mapper-body" id="mapperBody"></div>
+      <div class="mapper-footer">
+        <button class="mapper-btn-reset" onclick="resetMapperModal()">Restablecer auto-detección</button>
+        <div style="display:flex;gap:10px">
+          <button class="mapper-btn-cancel" onclick="closeMapperModal()">Cancelar</button>
+          <button class="mapper-btn-apply" onclick="applyMapperModal()">Aplicar</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="dashboardContent" style="display: none;">
@@ -1469,6 +1561,9 @@ let dataPrevFull = null;
 let dataCurrFull = null;
 let activeGroup = '__ALL__';
 let ivaEnabled = true;
+let wbPrev = null, wbCurr = null;   // workbooks crudos para re-parsear
+let detectedHeaders = [];            // [{name, index}] de la fila de cabeceras
+let columnMap = null;                // overrides del usuario, null = auto
 
 // ════════════════ TEMA (claro/oscuro) ════════════════
 function applyTheme(theme) {
@@ -1507,6 +1602,136 @@ const COL_SUB = {
   contratado: 6, ahorro: 7, error: 8, ocAmpliacion: 9, sobregiros: 10, sobrecosto: 11,
   estPagadas: 12, estPendientes: 13, proyeccion: 14
 };
+
+// ════════════════ COLUMN MAPPER ════════════════
+const CONCEPTS = [
+  { key: 'pptoBase',         label: 'PPTO BASE',          desc: 'Presupuesto original aprobado. Línea base para medir variaciones, ahorros y sobrecostos.', keywords: ['presupuesto base','ppto base','ppto','budget','presupuesto original','base aprobado'] },
+  { key: 'contratado',       label: 'CONTRATADO',          desc: 'Monto ya respaldado por contratos u órdenes de compra firmadas.', keywords: ['contratado','contrato','oc firmada','monto contratado','comprometido'] },
+  { key: 'pendiente',        label: 'POR CONTRATAR',       desc: 'Monto pendiente de adjudicar, sin contrato ni OC. Indica riesgo de variación.', keywords: ['por contratar','pendiente contratar','sin contrato','por adjudicar','sin oc','pendiente adjudicar'] },
+  { key: 'estPagadas',       label: 'PAGADO',              desc: 'Total ya desembolsado (facturas o estimaciones pagadas). Salida real de caja.', keywords: ['pagado','pagadas','paid','desembolsado','estimaciones pagadas','facturado pagado'] },
+  { key: 'estPendientes',    label: 'POR PAGAR',           desc: 'Compromisos ejecutados o facturados, aún no pagados (cuentas por pagar).', keywords: ['por pagar','pendiente pago','cuentas por pagar','estimaciones pendientes','por cobrar','aprobado pendiente'] },
+  { key: 'ahorro',           label: 'AHORRO',              desc: 'Diferencia positiva real cuando el costo contratado resulta menor que el presupuesto.', keywords: ['ahorro','saving','economia','ahorro real','economía','savings'] },
+  { key: 'ahorroProyectado', label: 'AHORRO PROYECTADO',   desc: 'Ahorro estimado en partidas aún no contratadas, basado en tendencias del proyecto.', keywords: ['ahorro proyectado','saving projected','ahorro estimado','proyectado ahorro'] },
+  { key: 'error',            label: 'REPROCESOS',          desc: 'Costos por trabajos repetidos o corregidos por errores, cambios tardíos o mala coordinación.', keywords: ['reproceso','reprocesos','rework','error','corrección','retrabajo'] },
+  { key: 'ocAmpliacion',     label: 'AMPLIACIONES',        desc: 'Aumentos de alcance (obras adicionales) que incrementan el presupuesto vía orden de cambio.', keywords: ['ampliacion','ampliaciones','adicional','oc adicional','orden de cambio','cambio alcance','oc ampliacion'] },
+  { key: 'sobregiros',       label: 'SOBREGIROS',          desc: 'Ofertas con mayor precio que el presupuestado pero con mismo alcance, cantidades y especificaciones.', keywords: ['sobregiro','sobregiros','overrun','excedente precio'] },
+  { key: 'sobrecosto',       label: 'SOBRECOSTO',          desc: 'Suma de reprocesos + ampliaciones + sobregiros. Variación desfavorable total.', keywords: ['sobrecosto','sobrecostos','cost overrun','costo adicional','variacion desfavorable','variación desfavorable'] },
+  { key: 'proyeccion',       label: 'PROYECCIÓN GLOBAL',   desc: 'Estimación del costo final del proyecto (pagado + por pagar + por contratar + sobrecosto).', keywords: ['proyeccion','proyección','proyeccion global','proyección global','forecast','costo final','estimacion final','estimación final'] },
+];
+
+function normStr(s) {
+  return String(s).toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function detectExcelHeaders(wb) {
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+  for (let i = 0; i < Math.min(rows.length, 10); i++) {
+    const row = rows[i] || [];
+    const s0 = String(row[0] || '').trim();
+    const s1 = String(row[1] || '').trim();
+    if (s0 === 'Name' || s1 === 'Subelementos') {
+      return row.map((h, idx) => ({ name: String(h ?? '').trim(), index: idx }))
+                .filter(h => h.name && h.name !== 'null');
+    }
+  }
+  return [];
+}
+
+function autoSuggestCol(keywords) {
+  for (const kw of keywords) {
+    const nkw = normStr(kw);
+    for (const h of detectedHeaders) {
+      if (normStr(h.name) === nkw) return h.index;
+    }
+  }
+  for (const kw of keywords) {
+    const nkw = normStr(kw);
+    for (const h of detectedHeaders) {
+      if (normStr(h.name).includes(nkw) || nkw.includes(normStr(h.name))) return h.index;
+    }
+  }
+  return -1;
+}
+
+function resolveColIndex(key) {
+  if (columnMap && columnMap[key] !== undefined) return columnMap[key];
+  if (detectedHeaders.length) {
+    const c = CONCEPTS.find(c => c.key === key);
+    if (c) { const idx = autoSuggestCol(c.keywords); if (idx >= 0) return idx; }
+  }
+  return COL_MAIN[key] ?? -1;
+}
+
+function openMapperModal() {
+  if (!detectedHeaders.length) {
+    alert('Primero carga al menos un archivo Excel para detectar sus columnas.');
+    return;
+  }
+  const body = document.getElementById('mapperBody');
+  const opts = detectedHeaders.map(h =>
+    `<option value="${h.index}">${h.index}: ${h.name}</option>`
+  ).join('');
+  const noneOpt = `<option value="-1">— sin asignar —</option>`;
+
+  body.innerHTML = CONCEPTS.map(c => {
+    const currentIdx = columnMap?.[c.key] ?? autoSuggestCol(c.keywords);
+    const isAuto = !columnMap?.[c.key] && currentIdx >= 0;
+    return `<div class="mapper-row">
+      <div class="mapper-concept">
+        <span class="mapper-label">${c.label}</span>
+        <span class="mapper-desc">${c.desc}</span>
+      </div>
+      <div class="mapper-select-wrap">
+        ${isAuto ? '<span class="mapper-auto-badge">auto</span>' : ''}
+        <select class="mapper-select" data-key="${c.key}">
+          ${noneOpt}
+          ${detectedHeaders.map(h =>
+            `<option value="${h.index}"${h.index === currentIdx ? ' selected' : ''}>${h.index}: ${h.name}</option>`
+          ).join('')}
+        </select>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('mapperModal').classList.add('open');
+}
+
+function closeMapperModal() {
+  document.getElementById('mapperModal').classList.remove('open');
+}
+
+function applyMapperModal() {
+  const selects = document.querySelectorAll('#mapperBody .mapper-select');
+  const map = {};
+  selects.forEach(sel => {
+    const idx = parseInt(sel.value);
+    if (!isNaN(idx) && idx >= 0) map[sel.dataset.key] = idx;
+  });
+  columnMap = Object.keys(map).length ? map : null;
+  closeMapperModal();
+  reparseAll();
+}
+
+function resetMapperModal() {
+  columnMap = null;
+  closeMapperModal();
+  reparseAll();
+}
+
+function reparseAll() {
+  if (wbPrev) { dataPrevFull = parseMondayExcel(wbPrev); }
+  if (wbCurr) { dataCurrFull = parseMondayExcel(wbCurr); }
+  if (!dataPrevFull && !dataCurrFull) return;
+  if (!dataPrevFull) dataPrevFull = dataCurrFull;
+  if (!dataCurrFull) dataCurrFull = dataPrevFull;
+  activeGroup = '__ALL__';
+  populateGroupFilter();
+  applyFilter();
+  tryRender();
+}
 
 // ════════════════ IVA ════════════════
 // Los Excel cargados NO incluyen IVA. Los valores se almacenan en crudo (sin IVA).
@@ -1582,25 +1807,30 @@ function parseMondayExcel(workbook) {
   const isEmpty = c => c === null || c === undefined || c === '';
   const isNum = c => typeof c === 'number' || (typeof c === 'string' && c !== '' && !isNaN(parseFloat(c.replace(/[^\d.\-]/g, ''))));
 
+  // Detectar cabeceras y actualizar detectedHeaders
+  for (let i = 0; i < Math.min(rows.length, 10); i++) {
+    const row = rows[i] || [];
+    if (String(row[0] || '').trim() === 'Name' || String(row[1] || '').trim() === 'Subelementos') {
+      detectedHeaders = row.map((h, idx) => ({ name: String(h ?? '').trim(), index: idx }))
+                          .filter(h => h.name && h.name !== 'null');
+      break;
+    }
+  }
+
+  // Resuelve índice de columna: user override → auto-sugerido → default hardcoded
+  const col = key => resolveColIndex(key);
+
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i] || [];
     if (row.every(isEmpty)) { inSubitemBlock = false; continue; }
 
     const c0 = row[0], c1 = row[1], c2 = row[2];
 
-    if (c0 === 'Name' && c1 === 'Subelementos') {
-      inSubitemBlock = false;
-      continue;
+    if (String(c0 || '').trim() === 'Name' && String(c1 || '').trim() === 'Subelementos') {
+      inSubitemBlock = false; continue;
     }
-    if (c0 === 'Subitems') {
-      inSubitemBlock = true;
-      continue;
-    }
-
-    if (isEmpty(c0) && isEmpty(c1) && isEmpty(c2)) {
-      inSubitemBlock = false;
-      continue;
-    }
+    if (String(c0 || '').trim() === 'Subitems') { inSubitemBlock = true; continue; }
+    if (isEmpty(c0) && isEmpty(c1) && isEmpty(c2)) { inSubitemBlock = false; continue; }
 
     const hasOnlyCol0 = !isEmpty(c0) && isEmpty(c1) && isEmpty(c2);
     const hasNumbers = row.slice(3).some(isNum);
@@ -1620,16 +1850,16 @@ function parseMondayExcel(workbook) {
         name: String(c1),
         status: row[COL_SUB.status] || '',
         pptoBase: 0,
-        contratado: numOrZero(row[COL_SUB.contratado]),
-        ahorro: numOrZero(row[COL_SUB.ahorro]),
-        pendiente: 0,
-        error: numOrZero(row[COL_SUB.error]),
-        ocAmpliacion: numOrZero(row[COL_SUB.ocAmpliacion]),
-        sobregiros: numOrZero(row[COL_SUB.sobregiros]),
-        sobrecosto: numOrZero(row[COL_SUB.sobrecosto]),
-        estPagadas: numOrZero(row[COL_SUB.estPagadas]),
-        estPendientes: numOrZero(row[COL_SUB.estPendientes]),
-        proyeccion: numOrZero(row[COL_SUB.proyeccion])
+        contratado:      numOrZero(row[col('contratado')]),
+        ahorro:          numOrZero(row[col('ahorro')]),
+        pendiente:       0,
+        error:           numOrZero(row[col('error')]),
+        ocAmpliacion:    numOrZero(row[col('ocAmpliacion')]),
+        sobregiros:      numOrZero(row[col('sobregiros')]),
+        sobrecosto:      numOrZero(row[col('sobrecosto')]),
+        estPagadas:      numOrZero(row[col('estPagadas')]),
+        estPendientes:   numOrZero(row[col('estPendientes')]),
+        proyeccion:      numOrZero(row[col('proyeccion')])
       };
       subitems.push(sub);
       if (currentParent) currentParent.subitems.push(sub);
@@ -1637,25 +1867,24 @@ function parseMondayExcel(workbook) {
     }
 
     if (!isEmpty(c0) && isEmpty(c1)) {
-      const ahorroDirecto = numOrZero(row[COL_MAIN.ahorro]);
-      const ahorroProy = numOrZero(row[COL_MAIN.ahorroProyectado]);
+      const ahorroDirecto = numOrZero(row[col('ahorro')]);
+      const ahorroProy    = numOrZero(row[col('ahorroProyectado')]);
       const item = {
-        name: String(c0).trim(),
-        status: '',
-        person: '',
-        pptoBase: numOrZero(row[COL_MAIN.pptoBase]),
-        contratado: numOrZero(row[COL_MAIN.contratado]),
-        ahorro: ahorroDirecto + ahorroProy,
-        ahorroDirecto: ahorroDirecto,
+        name:            String(c0).trim(),
+        status: '', person: '',
+        pptoBase:        numOrZero(row[col('pptoBase')]),
+        contratado:      numOrZero(row[col('contratado')]),
+        ahorro:          ahorroDirecto + ahorroProy,
+        ahorroDirecto:   ahorroDirecto,
         ahorroProyectado: ahorroProy,
-        pendiente: numOrZero(row[COL_MAIN.pendiente]),
-        error: numOrZero(row[COL_MAIN.error]),
-        ocAmpliacion: numOrZero(row[COL_MAIN.ocAmpliacion]),
-        sobregiros: numOrZero(row[COL_MAIN.sobregiros]),
-        sobrecosto: numOrZero(row[COL_MAIN.sobrecosto]),
-        estPagadas: numOrZero(row[COL_MAIN.estPagadas]),
-        estPendientes: numOrZero(row[COL_MAIN.estPendientes]),
-        proyeccion: numOrZero(row[COL_MAIN.proyeccion]),
+        pendiente:       numOrZero(row[col('pendiente')]),
+        error:           numOrZero(row[col('error')]),
+        ocAmpliacion:    numOrZero(row[col('ocAmpliacion')]),
+        sobregiros:      numOrZero(row[col('sobregiros')]),
+        sobrecosto:      numOrZero(row[col('sobrecosto')]),
+        estPagadas:      numOrZero(row[col('estPagadas')]),
+        estPendientes:   numOrZero(row[col('estPendientes')]),
+        proyeccion:      numOrZero(row[col('proyeccion')]),
         grupo: groupTitle,
         subitems: []
       };
@@ -1749,26 +1978,27 @@ function loadFile(e, which) {
   reader.onload = (ev) => {
     try {
       const wb = XLSX.read(ev.target.result, { type: 'array', cellDates: true });
-      const parsed = parseMondayExcel(wb);
+      const parsed = parseMondayExcel(wb); // también actualiza detectedHeaders
       if (which === 'prev') {
+        wbPrev = wb;
         dataPrevFull = parsed; dataPrev = parsed;
         document.getElementById('filenamePrev').textContent = file.name;
         document.getElementById('filenamePrev').classList.remove('empty');
         document.getElementById('slotPrev').classList.add('loaded');
       } else if (which === 'curr') {
+        wbCurr = wb;
         dataCurrFull = parsed; dataCurr = parsed;
         document.getElementById('filenameCurr').textContent = file.name;
         document.getElementById('filenameCurr').classList.remove('empty');
         document.getElementById('slotCurr').classList.add('loaded');
       } else if (which === 'single') {
-        // Mismo archivo se usa para ambas semanas
+        wbPrev = wb; wbCurr = wb;
         dataPrevFull = parsed; dataPrev = parsed;
         dataCurrFull = parsed; dataCurr = parsed;
         const fnameLbl = file.name + ' · usado como ambas semanas';
         document.getElementById('filenameSingle').textContent = fnameLbl;
         document.getElementById('filenameSingle').classList.remove('empty');
         document.getElementById('slotSingle').classList.add('loaded');
-        // Marcar también los otros slots para feedback claro
         document.getElementById('filenamePrev').textContent = file.name;
         document.getElementById('filenamePrev').classList.remove('empty');
         document.getElementById('slotPrev').classList.add('loaded');
@@ -1776,6 +2006,7 @@ function loadFile(e, which) {
         document.getElementById('filenameCurr').classList.remove('empty');
         document.getElementById('slotCurr').classList.add('loaded');
       }
+      document.getElementById('mapperBtn').style.display = 'flex';
       updateUploadStatus();
       activeGroup = '__ALL__';
       populateGroupFilter();
