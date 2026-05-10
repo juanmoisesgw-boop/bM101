@@ -254,6 +254,14 @@
   }
   .mapper-close:hover { color: var(--text); background: var(--surface-2); }
   .mapper-body { overflow-y: auto; padding: 2px 0; flex: 1; min-height: 0; }
+  .mapper-section-head {
+    padding: 7px 18px 5px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--text-3); background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 1;
+  }
+  .mapper-section-head--sub { border-top: 2px solid var(--border-strong); margin-top: 2px; }
   .mapper-body::-webkit-scrollbar { width: 8px; }
   .mapper-body::-webkit-scrollbar-track { background: var(--surface-2); }
   .mapper-body::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
@@ -1620,18 +1628,18 @@ const COL_SUB = {
 
 // ════════════════ COLUMN MAPPER ════════════════
 const CONCEPTS = [
-  { key: 'pptoBase',         essential: true,  label: 'PPTO BASE',          desc: 'Presupuesto original aprobado. Línea base para medir variaciones, ahorros y sobrecostos.', keywords: ['presupuesto base','ppto base','ppto','budget','presupuesto original','base aprobado'] },
-  { key: 'contratado',       essential: true,  label: 'CONTRATADO',          desc: 'Monto ya respaldado por contratos u órdenes de compra firmadas.', keywords: ['contratado','contrato','oc firmada','monto contratado','comprometido'] },
-  { key: 'pendiente',        essential: true,  label: 'POR CONTRATAR',       desc: 'Monto pendiente de adjudicar, sin contrato ni OC. Indica riesgo de variación.', keywords: ['por contratar','pendiente contratar','sin contrato','por adjudicar','sin oc','pendiente adjudicar'] },
-  { key: 'estPagadas',       essential: true,  label: 'PAGADO',              desc: 'Total ya desembolsado (facturas o estimaciones pagadas). Salida real de caja.', keywords: ['pagado','pagadas','paid','desembolsado','estimaciones pagadas','facturado pagado'] },
-  { key: 'estPendientes',    essential: true,  label: 'POR PAGAR',           desc: 'Compromisos ejecutados o facturados, aún no pagados (cuentas por pagar).', keywords: ['por pagar','pendiente pago','cuentas por pagar','estimaciones pendientes','por cobrar','aprobado pendiente'] },
-  { key: 'ahorro',           essential: true,  label: 'AHORRO',              desc: 'Diferencia positiva real cuando el costo contratado resulta menor que el presupuesto.', keywords: ['ahorro','saving','economia','ahorro real','economía','savings'] },
-  { key: 'ahorroProyectado', essential: false, label: 'AHORRO PROYECTADO',   desc: 'Ahorro estimado en partidas aún no contratadas, basado en tendencias del proyecto.', keywords: ['ahorro proyectado','saving projected','ahorro estimado','proyectado ahorro'] },
-  { key: 'error',            essential: false, label: 'REPROCESOS',          desc: 'Costos por trabajos repetidos o corregidos por errores, cambios tardíos o mala coordinación.', keywords: ['reproceso','reprocesos','rework','error','corrección','retrabajo'] },
-  { key: 'ocAmpliacion',     essential: false, label: 'AMPLIACIONES',        desc: 'Aumentos de alcance (obras adicionales) que incrementan el presupuesto vía orden de cambio.', keywords: ['ampliacion','ampliaciones','adicional','oc adicional','orden de cambio','cambio alcance','oc ampliacion'] },
-  { key: 'sobregiros',       essential: false, label: 'SOBREGIROS',          desc: 'Ofertas con mayor precio que el presupuestado pero con mismo alcance, cantidades y especificaciones.', keywords: ['sobregiro','sobregiros','overrun','excedente precio'] },
-  { key: 'sobrecosto',       essential: true,  label: 'SOBRECOSTO',          desc: 'Suma de reprocesos + ampliaciones + sobregiros. Variación desfavorable total.', keywords: ['sobrecosto','sobrecostos','cost overrun','costo adicional','variacion desfavorable','variación desfavorable'] },
-  { key: 'proyeccion',       essential: true,  label: 'PROYECCIÓN GLOBAL',   desc: 'Estimación del costo final del proyecto (pagado + por pagar + por contratar + sobrecosto).', keywords: ['proyeccion','proyección','proyeccion global','proyección global','forecast','costo final','estimacion final','estimación final'] },
+  { key: 'pptoBase',         essential: true,  inSub: false, label: 'PPTO BASE',          desc: 'Presupuesto original aprobado. Línea base para medir variaciones, ahorros y sobrecostos.', keywords: ['presupuesto base','ppto base','ppto','budget','presupuesto original','base aprobado'] },
+  { key: 'contratado',       essential: true,  inSub: true,  label: 'CONTRATADO',          desc: 'Monto ya respaldado por contratos u órdenes de compra firmadas.', keywords: ['contratado','contrato','oc firmada','monto contratado','comprometido'] },
+  { key: 'pendiente',        essential: true,  inSub: false, label: 'POR CONTRATAR',       desc: 'Monto pendiente de adjudicar, sin contrato ni OC. Indica riesgo de variación.', keywords: ['por contratar','pendiente contratar','sin contrato','por adjudicar','sin oc','pendiente adjudicar'] },
+  { key: 'estPagadas',       essential: true,  inSub: true,  label: 'PAGADO',              desc: 'Total ya desembolsado (facturas o estimaciones pagadas). Salida real de caja.', keywords: ['pagado','pagadas','paid','desembolsado','estimaciones pagadas','facturado pagado'] },
+  { key: 'estPendientes',    essential: true,  inSub: true,  label: 'POR PAGAR',           desc: 'Compromisos ejecutados o facturados, aún no pagados (cuentas por pagar).', keywords: ['por pagar','pendiente pago','cuentas por pagar','estimaciones pendientes','por cobrar','aprobado pendiente'] },
+  { key: 'ahorro',           essential: true,  inSub: true,  label: 'AHORRO',              desc: 'Diferencia positiva real cuando el costo contratado resulta menor que el presupuesto.', keywords: ['ahorro','saving','economia','ahorro real','economía','savings'] },
+  { key: 'ahorroProyectado', essential: false, inSub: false, label: 'AHORRO PROYECTADO',   desc: 'Ahorro estimado en partidas aún no contratadas, basado en tendencias del proyecto.', keywords: ['ahorro proyectado','saving projected','ahorro estimado','proyectado ahorro'] },
+  { key: 'error',            essential: false, inSub: true,  label: 'REPROCESOS',          desc: 'Costos por trabajos repetidos o corregidos por errores, cambios tardíos o mala coordinación.', keywords: ['reproceso','reprocesos','rework','error','corrección','retrabajo'] },
+  { key: 'ocAmpliacion',     essential: false, inSub: true,  label: 'AMPLIACIONES',        desc: 'Aumentos de alcance (obras adicionales) que incrementan el presupuesto vía orden de cambio.', keywords: ['ampliacion','ampliaciones','adicional','oc adicional','orden de cambio','cambio alcance','oc ampliacion'] },
+  { key: 'sobregiros',       essential: false, inSub: true,  label: 'SOBREGIROS',          desc: 'Ofertas con mayor precio que el presupuestado pero con mismo alcance, cantidades y especificaciones.', keywords: ['sobregiro','sobregiros','overrun','excedente precio'] },
+  { key: 'sobrecosto',       essential: true,  inSub: true,  label: 'SOBRECOSTO',          desc: 'Suma de reprocesos + ampliaciones + sobregiros. Variación desfavorable total.', keywords: ['sobrecosto','sobrecostos','cost overrun','costo adicional','variacion desfavorable','variación desfavorable'] },
+  { key: 'proyeccion',       essential: true,  inSub: true,  label: 'PROYECCIÓN GLOBAL',   desc: 'Estimación del costo final del proyecto (pagado + por pagar + por contratar + sobrecosto).', keywords: ['proyeccion','proyección','proyeccion global','proyección global','forecast','costo final','estimacion final','estimación final'] },
 ];
 
 function normStr(s) {
@@ -1671,13 +1679,42 @@ function autoSuggestCol(keywords) {
   return -1;
 }
 
-function resolveColIndex(key) {
-  if (columnMap && columnMap[key] !== undefined) return columnMap[key];
+function resolveMainCol(key) {
+  if (columnMap?.main?.[key] !== undefined) return columnMap.main[key];
   if (detectedHeaders.length) {
     const c = CONCEPTS.find(c => c.key === key);
     if (c) { const idx = autoSuggestCol(c.keywords); if (idx >= 0) return idx; }
   }
   return COL_MAIN[key] ?? -1;
+}
+
+function resolveSubCol(key) {
+  if (columnMap?.sub?.[key] !== undefined) return columnMap.sub[key];
+  // Subelementos tienen su propio offset de columnas; usar COL_SUB como base
+  return COL_SUB[key] ?? resolveMainCol(key);
+}
+
+function mapperRowHtml(c, section) {
+  const noneOpt = `<option value="-1">— sin asignar —</option>`;
+  const currentIdx = section === 'main'
+    ? (columnMap?.main?.[c.key] ?? autoSuggestCol(c.keywords))
+    : (columnMap?.sub?.[c.key] ?? (COL_SUB[c.key] ?? -1));
+  const isAuto = section === 'main' && !columnMap?.main?.[c.key] && currentIdx >= 0;
+  return `<div class="mapper-row">
+    <div class="mapper-concept">
+      <span class="mapper-label">${c.label}<span class="mapper-tag ${c.essential ? 'mapper-tag--essential' : 'mapper-tag--ref'}">${c.essential ? 'clave' : 'referencia'}</span></span>
+      <span class="mapper-desc">${c.desc}</span>
+    </div>
+    <div class="mapper-select-wrap">
+      ${isAuto ? '<span class="mapper-auto-badge">auto</span>' : ''}
+      <select class="mapper-select" data-key="${c.key}" data-section="${section}">
+        ${noneOpt}
+        ${detectedHeaders.map(h =>
+          `<option value="${h.index}"${h.index === currentIdx ? ' selected' : ''}>${h.index}: ${h.name}</option>`
+        ).join('')}
+      </select>
+    </div>
+  </div>`;
 }
 
 function openMapperModal() {
@@ -1686,31 +1723,11 @@ function openMapperModal() {
     return;
   }
   const body = document.getElementById('mapperBody');
-  const opts = detectedHeaders.map(h =>
-    `<option value="${h.index}">${h.index}: ${h.name}</option>`
-  ).join('');
-  const noneOpt = `<option value="-1">— sin asignar —</option>`;
-
-  body.innerHTML = CONCEPTS.map(c => {
-    const currentIdx = columnMap?.[c.key] ?? autoSuggestCol(c.keywords);
-    const isAuto = !columnMap?.[c.key] && currentIdx >= 0;
-    return `<div class="mapper-row">
-      <div class="mapper-concept">
-        <span class="mapper-label">${c.label}<span class="mapper-tag ${c.essential ? 'mapper-tag--essential' : 'mapper-tag--ref'}">${c.essential ? 'clave' : 'referencia'}</span></span>
-        <span class="mapper-desc">${c.desc}</span>
-      </div>
-      <div class="mapper-select-wrap">
-        ${isAuto ? '<span class="mapper-auto-badge">auto</span>' : ''}
-        <select class="mapper-select" data-key="${c.key}">
-          ${noneOpt}
-          ${detectedHeaders.map(h =>
-            `<option value="${h.index}"${h.index === currentIdx ? ' selected' : ''}>${h.index}: ${h.name}</option>`
-          ).join('')}
-        </select>
-      </div>
-    </div>`;
-  }).join('');
-
+  const mainRows = CONCEPTS.map(c => mapperRowHtml(c, 'main')).join('');
+  const subRows  = CONCEPTS.filter(c => c.inSub).map(c => mapperRowHtml(c, 'sub')).join('');
+  body.innerHTML =
+    `<div class="mapper-section-head">Elementos principales</div>${mainRows}` +
+    `<div class="mapper-section-head mapper-section-head--sub">Subelementos</div>${subRows}`;
   document.getElementById('mapperModal').classList.add('open');
 }
 
@@ -1719,13 +1736,16 @@ function closeMapperModal() {
 }
 
 function applyMapperModal() {
-  const selects = document.querySelectorAll('#mapperBody .mapper-select');
-  const map = {};
-  selects.forEach(sel => {
+  const mapMain = {}, mapSub = {};
+  document.querySelectorAll('#mapperBody .mapper-select').forEach(sel => {
     const idx = parseInt(sel.value);
-    if (!isNaN(idx) && idx >= 0) map[sel.dataset.key] = idx;
+    if (!isNaN(idx) && idx >= 0) {
+      if (sel.dataset.section === 'main') mapMain[sel.dataset.key] = idx;
+      else                                mapSub[sel.dataset.key]  = idx;
+    }
   });
-  columnMap = Object.keys(map).length ? map : null;
+  columnMap = (Object.keys(mapMain).length || Object.keys(mapSub).length)
+    ? { main: mapMain, sub: mapSub } : null;
   closeMapperModal();
   reparseAll();
 }
@@ -1832,8 +1852,8 @@ function parseMondayExcel(workbook) {
     }
   }
 
-  // Resuelve índice de columna: user override → auto-sugerido → default hardcoded
-  const col = key => resolveColIndex(key);
+  const col  = key => resolveMainCol(key);  // elementos principales
+  const scol = key => resolveSubCol(key);   // subelementos
 
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i] || [];
@@ -1865,16 +1885,16 @@ function parseMondayExcel(workbook) {
         name: String(c1),
         status: row[COL_SUB.status] || '',
         pptoBase: 0,
-        contratado:      numOrZero(row[col('contratado')]),
-        ahorro:          numOrZero(row[col('ahorro')]),
+        contratado:      numOrZero(row[scol('contratado')]),
+        ahorro:          numOrZero(row[scol('ahorro')]),
         pendiente:       0,
-        error:           numOrZero(row[col('error')]),
-        ocAmpliacion:    numOrZero(row[col('ocAmpliacion')]),
-        sobregiros:      numOrZero(row[col('sobregiros')]),
-        sobrecosto:      numOrZero(row[col('sobrecosto')]),
-        estPagadas:      numOrZero(row[col('estPagadas')]),
-        estPendientes:   numOrZero(row[col('estPendientes')]),
-        proyeccion:      numOrZero(row[col('proyeccion')])
+        error:           numOrZero(row[scol('error')]),
+        ocAmpliacion:    numOrZero(row[scol('ocAmpliacion')]),
+        sobregiros:      numOrZero(row[scol('sobregiros')]),
+        sobrecosto:      numOrZero(row[scol('sobrecosto')]),
+        estPagadas:      numOrZero(row[scol('estPagadas')]),
+        estPendientes:   numOrZero(row[scol('estPendientes')]),
+        proyeccion:      numOrZero(row[scol('proyeccion')])
       };
       subitems.push(sub);
       if (currentParent) currentParent.subitems.push(sub);
