@@ -2895,7 +2895,7 @@ function renderPies(view) {
     <div class="pie-legend-item">
       <span class="swatch" style="background:${r._color}"></span>
       <span class="name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</span>
-      <span class="pct">${totalProvProy > 0 ? ((r.value / totalProvProy) * 100).toFixed(1) : '0'}%</span>
+      <span class="pct">${tCurr.proyeccion > 0 ? ((r.value / tCurr.proyeccion) * 100).toFixed(1) : '0'}%</span>
     </div>
   `).join('') || '<div style="font-size:11px; color: var(--text-3);">Sin subelementos</div>';
 }
