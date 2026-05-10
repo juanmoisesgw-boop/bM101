@@ -264,7 +264,13 @@
   .mapper-row:last-child { border-bottom: none; }
   .mapper-row:hover { background: var(--surface-2); }
   .mapper-concept { flex: 1; min-width: 0; }
-  .mapper-label { font-size: 11px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.4px; }
+  .mapper-label { font-size: 11px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.4px; display: flex; align-items: center; gap: 6px; }
+  .mapper-tag {
+    font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 1px 5px; border-radius: 3px; flex-shrink: 0;
+  }
+  .mapper-tag--essential { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+  .mapper-tag--ref       { background: rgba(59,130,246,0.12); color: #60a5fa; border: 1px solid rgba(59,130,246,0.25); }
   .mapper-desc {
     font-size: 10px; color: var(--text-3); margin-top: 1px; line-height: 1.3;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
@@ -1614,18 +1620,18 @@ const COL_SUB = {
 
 // ════════════════ COLUMN MAPPER ════════════════
 const CONCEPTS = [
-  { key: 'pptoBase',         label: 'PPTO BASE',          desc: 'Presupuesto original aprobado. Línea base para medir variaciones, ahorros y sobrecostos.', keywords: ['presupuesto base','ppto base','ppto','budget','presupuesto original','base aprobado'] },
-  { key: 'contratado',       label: 'CONTRATADO',          desc: 'Monto ya respaldado por contratos u órdenes de compra firmadas.', keywords: ['contratado','contrato','oc firmada','monto contratado','comprometido'] },
-  { key: 'pendiente',        label: 'POR CONTRATAR',       desc: 'Monto pendiente de adjudicar, sin contrato ni OC. Indica riesgo de variación.', keywords: ['por contratar','pendiente contratar','sin contrato','por adjudicar','sin oc','pendiente adjudicar'] },
-  { key: 'estPagadas',       label: 'PAGADO',              desc: 'Total ya desembolsado (facturas o estimaciones pagadas). Salida real de caja.', keywords: ['pagado','pagadas','paid','desembolsado','estimaciones pagadas','facturado pagado'] },
-  { key: 'estPendientes',    label: 'POR PAGAR',           desc: 'Compromisos ejecutados o facturados, aún no pagados (cuentas por pagar).', keywords: ['por pagar','pendiente pago','cuentas por pagar','estimaciones pendientes','por cobrar','aprobado pendiente'] },
-  { key: 'ahorro',           label: 'AHORRO',              desc: 'Diferencia positiva real cuando el costo contratado resulta menor que el presupuesto.', keywords: ['ahorro','saving','economia','ahorro real','economía','savings'] },
-  { key: 'ahorroProyectado', label: 'AHORRO PROYECTADO',   desc: 'Ahorro estimado en partidas aún no contratadas, basado en tendencias del proyecto.', keywords: ['ahorro proyectado','saving projected','ahorro estimado','proyectado ahorro'] },
-  { key: 'error',            label: 'REPROCESOS',          desc: 'Costos por trabajos repetidos o corregidos por errores, cambios tardíos o mala coordinación.', keywords: ['reproceso','reprocesos','rework','error','corrección','retrabajo'] },
-  { key: 'ocAmpliacion',     label: 'AMPLIACIONES',        desc: 'Aumentos de alcance (obras adicionales) que incrementan el presupuesto vía orden de cambio.', keywords: ['ampliacion','ampliaciones','adicional','oc adicional','orden de cambio','cambio alcance','oc ampliacion'] },
-  { key: 'sobregiros',       label: 'SOBREGIROS',          desc: 'Ofertas con mayor precio que el presupuestado pero con mismo alcance, cantidades y especificaciones.', keywords: ['sobregiro','sobregiros','overrun','excedente precio'] },
-  { key: 'sobrecosto',       label: 'SOBRECOSTO',          desc: 'Suma de reprocesos + ampliaciones + sobregiros. Variación desfavorable total.', keywords: ['sobrecosto','sobrecostos','cost overrun','costo adicional','variacion desfavorable','variación desfavorable'] },
-  { key: 'proyeccion',       label: 'PROYECCIÓN GLOBAL',   desc: 'Estimación del costo final del proyecto (pagado + por pagar + por contratar + sobrecosto).', keywords: ['proyeccion','proyección','proyeccion global','proyección global','forecast','costo final','estimacion final','estimación final'] },
+  { key: 'pptoBase',         essential: true,  label: 'PPTO BASE',          desc: 'Presupuesto original aprobado. Línea base para medir variaciones, ahorros y sobrecostos.', keywords: ['presupuesto base','ppto base','ppto','budget','presupuesto original','base aprobado'] },
+  { key: 'contratado',       essential: true,  label: 'CONTRATADO',          desc: 'Monto ya respaldado por contratos u órdenes de compra firmadas.', keywords: ['contratado','contrato','oc firmada','monto contratado','comprometido'] },
+  { key: 'pendiente',        essential: true,  label: 'POR CONTRATAR',       desc: 'Monto pendiente de adjudicar, sin contrato ni OC. Indica riesgo de variación.', keywords: ['por contratar','pendiente contratar','sin contrato','por adjudicar','sin oc','pendiente adjudicar'] },
+  { key: 'estPagadas',       essential: true,  label: 'PAGADO',              desc: 'Total ya desembolsado (facturas o estimaciones pagadas). Salida real de caja.', keywords: ['pagado','pagadas','paid','desembolsado','estimaciones pagadas','facturado pagado'] },
+  { key: 'estPendientes',    essential: true,  label: 'POR PAGAR',           desc: 'Compromisos ejecutados o facturados, aún no pagados (cuentas por pagar).', keywords: ['por pagar','pendiente pago','cuentas por pagar','estimaciones pendientes','por cobrar','aprobado pendiente'] },
+  { key: 'ahorro',           essential: true,  label: 'AHORRO',              desc: 'Diferencia positiva real cuando el costo contratado resulta menor que el presupuesto.', keywords: ['ahorro','saving','economia','ahorro real','economía','savings'] },
+  { key: 'ahorroProyectado', essential: false, label: 'AHORRO PROYECTADO',   desc: 'Ahorro estimado en partidas aún no contratadas, basado en tendencias del proyecto.', keywords: ['ahorro proyectado','saving projected','ahorro estimado','proyectado ahorro'] },
+  { key: 'error',            essential: false, label: 'REPROCESOS',          desc: 'Costos por trabajos repetidos o corregidos por errores, cambios tardíos o mala coordinación.', keywords: ['reproceso','reprocesos','rework','error','corrección','retrabajo'] },
+  { key: 'ocAmpliacion',     essential: false, label: 'AMPLIACIONES',        desc: 'Aumentos de alcance (obras adicionales) que incrementan el presupuesto vía orden de cambio.', keywords: ['ampliacion','ampliaciones','adicional','oc adicional','orden de cambio','cambio alcance','oc ampliacion'] },
+  { key: 'sobregiros',       essential: false, label: 'SOBREGIROS',          desc: 'Ofertas con mayor precio que el presupuestado pero con mismo alcance, cantidades y especificaciones.', keywords: ['sobregiro','sobregiros','overrun','excedente precio'] },
+  { key: 'sobrecosto',       essential: true,  label: 'SOBRECOSTO',          desc: 'Suma de reprocesos + ampliaciones + sobregiros. Variación desfavorable total.', keywords: ['sobrecosto','sobrecostos','cost overrun','costo adicional','variacion desfavorable','variación desfavorable'] },
+  { key: 'proyeccion',       essential: true,  label: 'PROYECCIÓN GLOBAL',   desc: 'Estimación del costo final del proyecto (pagado + por pagar + por contratar + sobrecosto).', keywords: ['proyeccion','proyección','proyeccion global','proyección global','forecast','costo final','estimacion final','estimación final'] },
 ];
 
 function normStr(s) {
@@ -1690,7 +1696,7 @@ function openMapperModal() {
     const isAuto = !columnMap?.[c.key] && currentIdx >= 0;
     return `<div class="mapper-row">
       <div class="mapper-concept">
-        <span class="mapper-label">${c.label}</span>
+        <span class="mapper-label">${c.label}<span class="mapper-tag ${c.essential ? 'mapper-tag--essential' : 'mapper-tag--ref'}">${c.essential ? 'clave' : 'referencia'}</span></span>
         <span class="mapper-desc">${c.desc}</span>
       </div>
       <div class="mapper-select-wrap">
