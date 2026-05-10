@@ -2768,34 +2768,48 @@ function buildGruposPieData(data) {
 }
 
 function buildProveedoresPieData(items, subitems) {
-  // Qué ítems tienen subelementos registrados
-  const itemsWithSubs = new Set((subitems || []).map(s => s.parentName));
-
   const m = new Map();
 
-  // Para ítems CON subelementos: distribuir la proyección por proveedor
-  // usando los valores de cada subelemento individual
+  // Agrupar subelementos por partida padre
+  const subsByParent = new Map();
   (subitems || []).forEach(s => {
-    const proy = s.proyeccion || 0;
-    if (proy <= 0) return;
-    const prov = (s.proveedor || '').trim() || 'Por Definir';
-    m.set(prov, (m.get(prov) || 0) + proy);
+    if (!subsByParent.has(s.parentName)) subsByParent.set(s.parentName, []);
+    subsByParent.get(s.parentName).push(s);
   });
 
-  // Para ítems SIN subelementos: su proyección completa va a "Por Definir"
   (items || []).forEach(it => {
-    if (itemsWithSubs.has(it.name)) return;
-    const proy = it.proyeccion || 0;
-    if (proy <= 0) return;
-    m.set('Por Definir', (m.get('Por Definir') || 0) + proy);
+    const itemProy = it.proyeccion || 0;
+    if (itemProy <= 0) return;
+    const subs = subsByParent.get(it.name) || [];
+
+    if (subs.length === 0) {
+      // Sin subelementos: toda la proyección es "Por Contratar"
+      m.set('Por Contratar', (m.get('Por Contratar') || 0) + itemProy);
+    } else {
+      // Distribuir proyección de cada subelemento a su proveedor
+      let subTotal = 0;
+      subs.forEach(s => {
+        const proy = s.proyeccion || 0;
+        if (proy <= 0) return;
+        const prov = (s.proveedor || '').trim() || 'Por Definir';
+        m.set(prov, (m.get(prov) || 0) + proy);
+        subTotal += proy;
+      });
+      // Gap: monto proyectado de la partida no cubierto por subelementos
+      // (por contratar, ahorros pendientes, etc.)
+      const gap = itemProy - subTotal;
+      if (gap > 0.01) {
+        m.set('Por Contratar', (m.get('Por Contratar') || 0) + gap);
+      }
+    }
   });
 
   return [...m.entries()]
     .map(([name, value]) => ({ name, value }))
     .filter(r => r.value > 0)
     .sort((a, b) => {
-      if (a.name === 'Por Definir') return 1;
-      if (b.name === 'Por Definir') return -1;
+      if (a.name === 'Por Contratar') return 1;
+      if (b.name === 'Por Contratar') return -1;
       return b.value - a.value;
     });
 }
@@ -2871,10 +2885,9 @@ function renderPies(view) {
 
   // Pie 2: Proyección por proveedor (subitems + diferencia = proyección global)
   const sobreData = buildProveedoresPieData(view.curr.items, view.curr.subitems);
-  const totalProvProy = sobreData.reduce((s, r) => s + r.value, 0);
   drawPie(document.getElementById('pieSobreCanvas'), sobreData);
-  document.getElementById('pieSobreCenterVal').textContent = fmtQ(totalProvProy);
-  const provCount = sobreData.filter(r => r.name !== 'Por Definir').length;
+  document.getElementById('pieSobreCenterVal').textContent = fmtQ(tCurr.proyeccion);
+  const provCount = sobreData.filter(r => r.name !== 'Por Contratar' && r.name !== 'Por Definir').length;
   document.getElementById('pieSobreMeta').textContent =
     sobreData.length ? `${provCount} proveedores` : 'Sin datos';
   const legS = document.getElementById('pieSobreLegend');
@@ -2897,10 +2910,10 @@ function openPieModal(type) {
     total = items.reduce((s, r) => s + r.value, 0);
     lblCenter = 'Total proyectado';
   } else {
-    title = 'Proyección por Proveedor';
+    title = 'Proyección de Proveedores';
     items = buildProveedoresPieData(dataCurr.items, dataCurr.subitems);
-    total = items.reduce((s, r) => s + r.value, 0);
-    lblCenter = 'Sobrecosto total';
+    total = dataCurr.totals.proyeccion;
+    lblCenter = 'Proyección total';
   }
   pieModalCurrent = { type, items, total };
   document.getElementById('pieModalTitle').textContent = title;
