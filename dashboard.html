@@ -1475,6 +1475,20 @@
           </div>
           <div class="breakdown-row">
             <span class="label-mini">
+              <span class="dot" style="background: var(--accent);"></span>
+              Notas de Cambio
+            </span>
+            <span class="val-mini" id="ahorroNotasCambioVal">Q 0</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="label-mini">
+              <span class="dot" style="background: var(--orange);"></span>
+              Ordenes de Cambio
+            </span>
+            <span class="val-mini" id="ahorroOCVal">Q 0</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="label-mini">
               <span class="dot" style="background: var(--green);"></span>
               Partidas con ahorro
             </span>
@@ -1818,6 +1832,7 @@ function numOrZero(v) {
 function scaleData(data, mult) {
   if (!data) return data;
   const numFields = ['pptoBase','contratado','ahorro','ahorroDirecto','ahorroProyectado',
+    'notasCambioAhorro','ocAmpliacionAhorro','errorAhorro','sobregirosAhorro',
     'pendiente','notasCambio','ocAmpliacion','error','sobregiros','sobrecosto',
     'estPagadas','estPendientes','proyeccion'];
   const scaleObj = obj => {
@@ -1955,14 +1970,19 @@ function parseMondayExcel(workbook) {
       const ahorroProy    = numOrZero(row[col('ahorroProyectado')]);
       const sobrecostoVal = numOrZero(row[col('sobrecosto')]);
       const origen = classifyGrupo(groupTitle);
+      const ahorroTotalRow = ahorroDirecto + ahorroProy;
       const item = {
         name:            String(c0).trim(),
         status: '', person: '',
         pptoBase:        numOrZero(row[col('pptoBase')]),
         contratado:      numOrZero(row[col('contratado')]),
-        ahorro:          ahorroDirecto + ahorroProy,
+        ahorro:          ahorroTotalRow,
         ahorroDirecto:   ahorroDirecto,
         ahorroProyectado: ahorroProy,
+        notasCambioAhorro:  origen === 'notasCambio'  ? ahorroTotalRow : 0,
+        ocAmpliacionAhorro: origen === 'ocAmpliacion' ? ahorroTotalRow : 0,
+        errorAhorro:        origen === 'error'        ? ahorroTotalRow : 0,
+        sobregirosAhorro:   origen === 'sobregiros'   ? ahorroTotalRow : 0,
         pendiente:       numOrZero(row[col('pendiente')]),
         notasCambio:     origen === 'notasCambio'  ? sobrecostoVal : 0,
         ocAmpliacion:    origen === 'ocAmpliacion' ? sobrecostoVal : 0,
@@ -2027,7 +2047,7 @@ function renderProveedores(data) {
 }
 
 function aggregate(items) {
-  const t = { pptoBase: 0, contratado: 0, ahorro: 0, ahorroDirecto: 0, ahorroProyectado: 0, pendiente: 0, notasCambio: 0, ocAmpliacion: 0, error: 0, sobregiros: 0, sobrecosto: 0, estPagadas: 0, estPendientes: 0, proyeccion: 0 };
+  const t = { pptoBase: 0, contratado: 0, ahorro: 0, ahorroDirecto: 0, ahorroProyectado: 0, notasCambioAhorro: 0, ocAmpliacionAhorro: 0, errorAhorro: 0, sobregirosAhorro: 0, pendiente: 0, notasCambio: 0, ocAmpliacion: 0, error: 0, sobregiros: 0, sobrecosto: 0, estPagadas: 0, estPendientes: 0, proyeccion: 0 };
   items.forEach(it => Object.keys(t).forEach(k => { t[k] += it[k] || 0; }));
   return t;
 }
@@ -2327,6 +2347,8 @@ function renderAhorroCard(tCurr, tPrev, itemsCurr, itemsPrev) {
   document.getElementById('ahorroTotal').textContent = fmtFull(tCurr.ahorro);
   document.getElementById('ahorroDirectoVal').textContent = fmtQ(tCurr.ahorroDirecto);
   document.getElementById('ahorroProyectadoVal').textContent = fmtQ(tCurr.ahorroProyectado);
+  document.getElementById('ahorroNotasCambioVal').textContent = fmtQ(tCurr.notasCambioAhorro);
+  document.getElementById('ahorroOCVal').textContent = fmtQ(tCurr.ocAmpliacionAhorro);
   const valEl = document.getElementById('ahorroValEl');
   valEl.classList.remove('muted', 'success', 'danger');
   valEl.classList.add(tCurr.ahorro > 0 ? 'success' : 'muted');
