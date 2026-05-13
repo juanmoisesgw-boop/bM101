@@ -841,7 +841,7 @@
   /* ═══════ PROVEEDOR + PIES (bloques separados a ancho completo) ═══════ */
   .pies-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 24px;
     margin-bottom: 16px;
   }
@@ -1550,6 +1550,22 @@
             </div>
           </div>
           <div class="pie-legend" id="pieSobreLegend"></div>
+        </div>
+      </div>
+      <div class="pie-card" onclick="openPieModal('proveedores')" title="Ver detalle">
+        <div class="pie-card-head">
+          <h3>Contratado por Proveedor</h3>
+          <span class="meta" id="pieProvMeta"></span>
+        </div>
+        <div class="pie-card-body">
+          <div class="pie-canvas-wrap">
+            <canvas id="pieProvCanvas" width="220" height="220"></canvas>
+            <div class="pie-center">
+              <div class="pc-val" id="pieProvCenterVal">Q 0</div>
+              <div class="pc-lbl">Total contratado</div>
+            </div>
+          </div>
+          <div class="pie-legend" id="pieProvLegend"></div>
         </div>
       </div>
     </div>
@@ -2910,6 +2926,24 @@ function buildEstadosPieData(subitems) {
     });
 }
 
+function buildProveedoresPieData(subitems) {
+  const m = new Map();
+  (subitems || []).forEach(s => {
+    const c = s.contratado || 0;
+    if (c <= 0) return;
+    const prov = (s.proveedor && String(s.proveedor).trim()) || 'Sin proveedor';
+    m.set(prov, (m.get(prov) || 0) + c);
+  });
+  return [...m.entries()]
+    .map(([name, value]) => ({ name, value }))
+    .filter(r => r.value > 0)
+    .sort((a, b) => {
+      if (a.name === 'Sin proveedor') return 1;
+      if (b.name === 'Sin proveedor') return -1;
+      return b.value - a.value;
+    });
+}
+
 function drawPie(canvas, items, options = {}) {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
@@ -2995,6 +3029,23 @@ function renderPies(view) {
       <span class="pct">${totalContratado > 0 ? ((r.value / totalContratado) * 100).toFixed(1) : '0'}%</span>
     </div>
   `).join('') || '<div style="font-size:11px; color: var(--text-3);">Sin subelementos</div>';
+
+  // Pie 3: Contratado por Proveedor
+  const provData = buildProveedoresPieData(view.curr.subitems);
+  const totalProv = provData.reduce((s, r) => s + r.value, 0);
+  drawPie(document.getElementById('pieProvCanvas'), provData);
+  document.getElementById('pieProvCenterVal').textContent = fmtQ(totalProv);
+  const provCount = provData.filter(r => r.name !== 'Sin proveedor').length;
+  document.getElementById('pieProvMeta').textContent =
+    provData.length ? `${provCount} proveedores` : 'Sin datos';
+  const legP = document.getElementById('pieProvLegend');
+  legP.innerHTML = provData.map(r => `
+    <div class="pie-legend-item">
+      <span class="swatch" style="background:${r._color}"></span>
+      <span class="name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</span>
+      <span class="pct">${totalProv > 0 ? ((r.value / totalProv) * 100).toFixed(1) : '0'}%</span>
+    </div>
+  `).join('') || '<div style="font-size:11px; color: var(--text-3);">Sin subelementos</div>';
 }
 
 let pieModalCurrent = null;
@@ -3006,6 +3057,11 @@ function openPieModal(type) {
     items = buildGruposPieData(dataCurr);
     total = items.reduce((s, r) => s + r.value, 0);
     lblCenter = 'Total proyectado';
+  } else if (type === 'proveedores') {
+    title = 'Contratado por Proveedor';
+    items = buildProveedoresPieData(dataCurr.subitems);
+    total = items.reduce((s, r) => s + r.value, 0);
+    lblCenter = 'Total contratado';
   } else {
     title = 'Contratado por Estado';
     items = buildEstadosPieData(dataCurr.subitems);
@@ -3044,6 +3100,7 @@ window.addEventListener('resize', () => {
   if (dataCurr && dataPrev) {
     drawPie(document.getElementById('pieGruposCanvas'), buildGruposPieData(dataCurr));
     drawPie(document.getElementById('pieSobreCanvas'), buildEstadosPieData(dataCurr.subitems));
+    drawPie(document.getElementById('pieProvCanvas'), buildProveedoresPieData(dataCurr.subitems));
     if (pieModalCurrent) {
       drawPie(document.getElementById('pieModalCanvas'), pieModalCurrent.items, { innerRatio: 0.55 });
     }
