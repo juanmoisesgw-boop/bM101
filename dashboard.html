@@ -1489,13 +1489,6 @@
           </div>
           <div class="breakdown-row">
             <span class="label-mini">
-              <span class="dot" style="background: var(--amber);"></span>
-              Sobregiros
-            </span>
-            <span class="val-mini" id="ahorroSobregirosVal">Q 0</span>
-          </div>
-          <div class="breakdown-row">
-            <span class="label-mini">
               <span class="dot" style="background: var(--green);"></span>
               Partidas con ahorro
             </span>
@@ -2356,7 +2349,6 @@ function renderAhorroCard(tCurr, tPrev, itemsCurr, itemsPrev) {
   document.getElementById('ahorroProyectadoVal').textContent = fmtQ(tCurr.ahorroProyectado);
   document.getElementById('ahorroNotasCambioVal').textContent = fmtQ(tCurr.notasCambioAhorro);
   document.getElementById('ahorroOCVal').textContent = fmtQ(tCurr.ocAmpliacionAhorro);
-  document.getElementById('ahorroSobregirosVal').textContent = fmtQ(tCurr.sobregirosAhorro);
   const valEl = document.getElementById('ahorroValEl');
   valEl.classList.remove('muted', 'success', 'danger');
   valEl.classList.add(tCurr.ahorro > 0 ? 'success' : 'muted');
