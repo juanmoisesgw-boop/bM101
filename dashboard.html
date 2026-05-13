@@ -1536,9 +1536,9 @@
           <div class="pie-legend" id="pieGruposLegend"></div>
         </div>
       </div>
-      <div class="pie-card" onclick="openPieModal('sobrecosto')" title="Ver detalle">
+      <div class="pie-card" onclick="openPieModal('estados')" title="Ver detalle">
         <div class="pie-card-head">
-          <h3>Proyección por Proveedor</h3>
+          <h3>Contratado por Estado</h3>
           <span class="meta" id="pieSobreMeta"></span>
         </div>
         <div class="pie-card-body">
@@ -1546,7 +1546,7 @@
             <canvas id="pieSobreCanvas" width="220" height="220"></canvas>
             <div class="pie-center">
               <div class="pc-val" id="pieSobreCenterVal">Q 0</div>
-              <div class="pc-lbl">Total proyectado</div>
+              <div class="pc-lbl">Total contratado</div>
             </div>
           </div>
           <div class="pie-legend" id="pieSobreLegend"></div>
@@ -2892,49 +2892,20 @@ function buildGruposPieData(data) {
   return arr;
 }
 
-function buildProveedoresPieData(items, subitems) {
+function buildEstadosPieData(subitems) {
   const m = new Map();
-
-  // Agrupar subelementos por partida padre
-  const subsByParent = new Map();
   (subitems || []).forEach(s => {
-    if (!subsByParent.has(s.parentName)) subsByParent.set(s.parentName, []);
-    subsByParent.get(s.parentName).push(s);
+    const c = s.contratado || 0;
+    if (c <= 0) return;
+    const st = (s.status && String(s.status).trim()) || 'Sin estado';
+    m.set(st, (m.get(st) || 0) + c);
   });
-
-  (items || []).forEach(it => {
-    const itemProy = it.proyeccion || 0;
-    if (itemProy <= 0) return;
-    const subs = subsByParent.get(it.name) || [];
-
-    if (subs.length === 0) {
-      // Sin subelementos: toda la proyección es "Por Contratar"
-      m.set('Por Contratar', (m.get('Por Contratar') || 0) + itemProy);
-    } else {
-      // Distribuir proyección de cada subelemento a su proveedor
-      let subTotal = 0;
-      subs.forEach(s => {
-        const proy = s.proyeccion || 0;
-        if (proy <= 0) return;
-        const prov = (s.proveedor || '').trim() || 'Por Definir';
-        m.set(prov, (m.get(prov) || 0) + proy);
-        subTotal += proy;
-      });
-      // Gap: monto proyectado de la partida no cubierto por subelementos
-      // (por contratar, ahorros pendientes, etc.)
-      const gap = itemProy - subTotal;
-      if (gap > 0.01) {
-        m.set('Por Contratar', (m.get('Por Contratar') || 0) + gap);
-      }
-    }
-  });
-
   return [...m.entries()]
     .map(([name, value]) => ({ name, value }))
     .filter(r => r.value > 0)
     .sort((a, b) => {
-      if (a.name === 'Por Contratar') return 1;
-      if (b.name === 'Por Contratar') return -1;
+      if (a.name === 'Sin estado') return 1;
+      if (b.name === 'Sin estado') return -1;
       return b.value - a.value;
     });
 }
@@ -3008,19 +2979,20 @@ function renderPies(view) {
     </div>
   `).join('') || '<div style="font-size:11px; color: var(--text-3);">Sin datos</div>';
 
-  // Pie 2: Proyección por proveedor (subitems + diferencia = proyección global)
-  const sobreData = buildProveedoresPieData(view.curr.items, view.curr.subitems);
-  drawPie(document.getElementById('pieSobreCanvas'), sobreData);
-  document.getElementById('pieSobreCenterVal').textContent = fmtQ(tCurr.proyeccion);
-  const provCount = sobreData.filter(r => r.name !== 'Por Contratar' && r.name !== 'Por Definir').length;
+  // Pie 2: Contratado por Estado (subitems agrupados por columna ESTADO)
+  const estadosData = buildEstadosPieData(view.curr.subitems);
+  const totalContratado = estadosData.reduce((s, r) => s + r.value, 0);
+  drawPie(document.getElementById('pieSobreCanvas'), estadosData);
+  document.getElementById('pieSobreCenterVal').textContent = fmtQ(totalContratado);
+  const estadosCount = estadosData.filter(r => r.name !== 'Sin estado').length;
   document.getElementById('pieSobreMeta').textContent =
-    sobreData.length ? `${provCount} proveedores` : 'Sin datos';
+    estadosData.length ? `${estadosCount} estados` : 'Sin datos';
   const legS = document.getElementById('pieSobreLegend');
-  legS.innerHTML = sobreData.map(r => `
+  legS.innerHTML = estadosData.map(r => `
     <div class="pie-legend-item">
       <span class="swatch" style="background:${r._color}"></span>
       <span class="name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</span>
-      <span class="pct">${tCurr.proyeccion > 0 ? ((r.value / tCurr.proyeccion) * 100).toFixed(1) : '0'}%</span>
+      <span class="pct">${totalContratado > 0 ? ((r.value / totalContratado) * 100).toFixed(1) : '0'}%</span>
     </div>
   `).join('') || '<div style="font-size:11px; color: var(--text-3);">Sin subelementos</div>';
 }
@@ -3035,10 +3007,10 @@ function openPieModal(type) {
     total = items.reduce((s, r) => s + r.value, 0);
     lblCenter = 'Total proyectado';
   } else {
-    title = 'Proyección de Proveedores';
-    items = buildProveedoresPieData(dataCurr.items, dataCurr.subitems);
-    total = dataCurr.totals.proyeccion;
-    lblCenter = 'Proyección total';
+    title = 'Contratado por Estado';
+    items = buildEstadosPieData(dataCurr.subitems);
+    total = items.reduce((s, r) => s + r.value, 0);
+    lblCenter = 'Total contratado';
   }
   pieModalCurrent = { type, items, total };
   document.getElementById('pieModalTitle').textContent = title;
@@ -3071,7 +3043,7 @@ function closePieModalOnBackdrop(e) {
 window.addEventListener('resize', () => {
   if (dataCurr && dataPrev) {
     drawPie(document.getElementById('pieGruposCanvas'), buildGruposPieData(dataCurr));
-    drawPie(document.getElementById('pieSobreCanvas'), buildProveedoresPieData(dataCurr.items, dataCurr.subitems));
+    drawPie(document.getElementById('pieSobreCanvas'), buildEstadosPieData(dataCurr.subitems));
     if (pieModalCurrent) {
       drawPie(document.getElementById('pieModalCanvas'), pieModalCurrent.items, { innerRatio: 0.55 });
     }
