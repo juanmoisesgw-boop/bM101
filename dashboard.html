@@ -1489,6 +1489,13 @@
           </div>
           <div class="breakdown-row">
             <span class="label-mini">
+              <span class="dot" style="background: #a855f7;"></span>
+              Proyecciones
+            </span>
+            <span class="val-mini" id="ahorroProyeccionesVal">Q 0</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="label-mini">
               <span class="dot" style="background: var(--green);"></span>
               Partidas con ahorro
             </span>
@@ -1832,8 +1839,8 @@ function numOrZero(v) {
 function scaleData(data, mult) {
   if (!data) return data;
   const numFields = ['pptoBase','contratado','ahorro','ahorroDirecto','ahorroProyectado',
-    'notasCambioAhorro','ocAmpliacionAhorro','errorAhorro','sobregirosAhorro',
-    'pendiente','notasCambio','ocAmpliacion','error','sobregiros','sobrecosto',
+    'notasCambioAhorro','ocAmpliacionAhorro','proyeccionesAhorro','errorAhorro','sobregirosAhorro',
+    'pendiente','notasCambio','ocAmpliacion','proyecciones','error','sobregiros','sobrecosto',
     'estPagadas','estPendientes','proyeccion'];
   const scaleObj = obj => {
     const out = Object.assign({}, obj);
@@ -1883,6 +1890,7 @@ function classifyGrupo(g) {
   if (n.includes('reproceso')) return 'error';
   if (n.includes('orden de cambio') || n.includes('ordenes de cambio')) return 'ocAmpliacion';
   if (n.includes('nota de cambio') || n.includes('notas de cambio')) return 'notasCambio';
+  if (n.includes('proyeccion') || n.includes('proyecciones')) return 'proyecciones';
   return 'sobregiros';
 }
 
@@ -1953,6 +1961,7 @@ function parseMondayExcel(workbook) {
         pendiente:       0,
         notasCambio:     0,
         ocAmpliacion:    0,
+        proyecciones:    0,
         error:           0,
         sobregiros:      0,
         sobrecosto:      0,
@@ -1981,11 +1990,13 @@ function parseMondayExcel(workbook) {
         ahorroProyectado: ahorroProy,
         notasCambioAhorro:  origen === 'notasCambio'  ? ahorroTotalRow : 0,
         ocAmpliacionAhorro: origen === 'ocAmpliacion' ? ahorroTotalRow : 0,
+        proyeccionesAhorro: origen === 'proyecciones' ? ahorroTotalRow : 0,
         errorAhorro:        origen === 'error'        ? ahorroTotalRow : 0,
         sobregirosAhorro:   origen === 'sobregiros'   ? ahorroTotalRow : 0,
         pendiente:       numOrZero(row[col('pendiente')]),
         notasCambio:     origen === 'notasCambio'  ? sobrecostoVal : 0,
         ocAmpliacion:    origen === 'ocAmpliacion' ? sobrecostoVal : 0,
+        proyecciones:    origen === 'proyecciones' ? sobrecostoVal : 0,
         error:           origen === 'error'        ? sobrecostoVal : 0,
         sobregiros:      origen === 'sobregiros'   ? sobrecostoVal : 0,
         sobrecosto:      sobrecostoVal,
@@ -2047,7 +2058,7 @@ function renderProveedores(data) {
 }
 
 function aggregate(items) {
-  const t = { pptoBase: 0, contratado: 0, ahorro: 0, ahorroDirecto: 0, ahorroProyectado: 0, notasCambioAhorro: 0, ocAmpliacionAhorro: 0, errorAhorro: 0, sobregirosAhorro: 0, pendiente: 0, notasCambio: 0, ocAmpliacion: 0, error: 0, sobregiros: 0, sobrecosto: 0, estPagadas: 0, estPendientes: 0, proyeccion: 0 };
+  const t = { pptoBase: 0, contratado: 0, ahorro: 0, ahorroDirecto: 0, ahorroProyectado: 0, notasCambioAhorro: 0, ocAmpliacionAhorro: 0, proyeccionesAhorro: 0, errorAhorro: 0, sobregirosAhorro: 0, pendiente: 0, notasCambio: 0, ocAmpliacion: 0, proyecciones: 0, error: 0, sobregiros: 0, sobrecosto: 0, estPagadas: 0, estPendientes: 0, proyeccion: 0 };
   items.forEach(it => Object.keys(t).forEach(k => { t[k] += it[k] || 0; }));
   return t;
 }
@@ -2306,12 +2317,13 @@ function renderSobrecostoCard(tCurr, tPrev) {
     txt.textContent = 'Sin cambio';
   }
 
-  // Breakdown: 4 orígenes (Notas de Cambio, Ordenes de Cambio, Reprocesos, Sobregiros)
+  // Breakdown: 5 orígenes (Notas de Cambio, Ordenes de Cambio, Proyecciones, Reprocesos, Sobregiros)
   const detail = document.getElementById('sobrecostoDetail');
   detail.innerHTML = '';
   const rows = [
     { label: 'Notas de Cambio', value: tCurr.notasCambio, prev: tPrev.notasCambio, color: 'var(--accent)' },
     { label: 'Ordenes de Cambio', value: tCurr.ocAmpliacion, prev: tPrev.ocAmpliacion, color: 'var(--orange)' },
+    { label: 'Proyecciones', value: tCurr.proyecciones, prev: tPrev.proyecciones, color: '#a855f7' },
     { label: 'Reprocesos', value: tCurr.error, prev: tPrev.error, color: 'var(--red)' },
     { label: 'Sobregiros', value: tCurr.sobregiros, prev: tPrev.sobregiros, color: 'var(--amber)' }
   ];
@@ -2349,6 +2361,7 @@ function renderAhorroCard(tCurr, tPrev, itemsCurr, itemsPrev) {
   document.getElementById('ahorroProyectadoVal').textContent = fmtQ(tCurr.ahorroProyectado);
   document.getElementById('ahorroNotasCambioVal').textContent = fmtQ(tCurr.notasCambioAhorro);
   document.getElementById('ahorroOCVal').textContent = fmtQ(tCurr.ocAmpliacionAhorro);
+  document.getElementById('ahorroProyeccionesVal').textContent = fmtQ(tCurr.proyeccionesAhorro);
   const valEl = document.getElementById('ahorroValEl');
   valEl.classList.remove('muted', 'success', 'danger');
   valEl.classList.add(tCurr.ahorro > 0 ? 'success' : 'muted');
@@ -2517,6 +2530,7 @@ function renderSobrecostoModal() {
       <th class="num">Δ</th>
       <th class="num">Notas C.</th>
       <th class="num">Ord. Cambio</th>
+      <th class="num">Proyecciones</th>
       <th class="num">Reprocesos</th>
       <th class="num">Sobregiros</th>
     </tr></thead><tbody>`;
@@ -2533,13 +2547,14 @@ function renderSobrecostoModal() {
       prev: prev.sobrecosto || 0,
       notasCambio: it.notasCambio,
       ocAmpliacion: it.ocAmpliacion,
+      proyecciones: it.proyecciones,
       error: it.error,
       sobregiros: it.sobregiros
     });
   });
 
   Object.keys(byGrupo).forEach(grupo => {
-    html += `<tr class="grupo-row"><td colspan="8">${grupo}</td></tr>`;
+    html += `<tr class="grupo-row"><td colspan="9">${grupo}</td></tr>`;
     byGrupo[grupo].forEach(r => {
       const d = r.curr - r.prev;
       let dC = 'flat', dT = '=';
@@ -2552,6 +2567,7 @@ function renderSobrecostoModal() {
         <td class="num delta-cell ${dC}">${dT}</td>
         <td class="num">${fmtQ(r.notasCambio)}</td>
         <td class="num">${fmtQ(r.ocAmpliacion)}</td>
+        <td class="num">${fmtQ(r.proyecciones)}</td>
         <td class="num">${fmtQ(r.error)}</td>
         <td class="num">${fmtQ(r.sobregiros)}</td>
       </tr>`;
@@ -2570,6 +2586,7 @@ function renderSobrecostoModal() {
     <td class="num delta-cell ${totDC}">${totDT}</td>
     <td class="num">${fmtQ(tCurr.notasCambio)}</td>
     <td class="num">${fmtQ(tCurr.ocAmpliacion)}</td>
+    <td class="num">${fmtQ(tCurr.proyecciones)}</td>
     <td class="num">${fmtQ(tCurr.error)}</td>
     <td class="num">${fmtQ(tCurr.sobregiros)}</td>
   </tr></tfoot></table>`;
