@@ -1613,29 +1613,30 @@ function toggleTheme() {
   if (saved === 'light') document.body.classList.add('light');
 })();
 
-// Mapeo de columnas para ELEMENTOS PRINCIPALES (estructura estándar del Excel exportado)
-// A(0)=Name  B(1)=Subelementos  C(2)=Cod
-// D(3)=PPTO BASE  E(4)=CONTRATADO  F(5)=POR CONTRATAR
-// G(6)=PAGADO  H(7)=POR PAGAR  I(8)=AHORRO  J(9)=AHORRO PROYECTADO
-// K(10)=REPROCESOS  L(11)=AMPLIACIONES  M(12)=SOBREGIROS  N(13)=SOBRECOSTO  O(14)=PROYECCION GLOBAL
+// Mapeo de columnas para ELEMENTOS PRINCIPALES (formato Excel mayo 2026)
+// A(0)=Name  B(1)=Subelementos  C(2)=Codigo
+// D(3)=PPTO BASE  E(4)=CONTRATADO  F(5)=% ALCANCE CONTRATADO
+// G(6)=POR CONTRATAR  H(7)=PAGADO  I(8)=POR PAGAR
+// J(9)=SOBRECOSTO  K(10)=AHORRO  L(11)=REDUCCION ESTIMADA
+// M(12)=AHORRO PROYECTADO  N(13)=PPTO PROYECTADO  O(14)=VARIACION PROYECTADA
+// P(15)=PPTO PESIMISTA  Q(16)=VARIACION PESIMISTA
+// Las categorías Reprocesos / Ordenes de Cambio / Notas de Cambio ya no son
+// columnas: se derivan del grupo al que pertenece cada renglón (ver classifyGrupo).
 const COL_MAIN = {
   name: 0, subelementos: 1, cod: 2,
-  pptoBase: 3, contratado: 4, pendiente: 5,
-  estPagadas: 6, estPendientes: 7,
-  ahorro: 8, ahorroProyectado: 9,
-  error: 10, ocAmpliacion: 11, sobregiros: 12, sobrecosto: 13,
-  proyeccion: 14
+  pptoBase: 3, contratado: 4, alcance: 5,
+  pendiente: 6, estPagadas: 7, estPendientes: 8,
+  sobrecosto: 9, ahorro: 10, reduccion: 11,
+  ahorroProyectado: 12, proyeccion: 13,
+  variacion: 14, pptoPesimista: 15, variacionPesimista: 16
 };
-// Mapeo de columnas para SUBELEMENTOS (estructura estándar)
-// A(0)=Subitems  B(1)=Name  C(2)=Cod  D(3)=Estado  E(4)=Proveedor  F(5)=RAZON
-// G(6)=CONTRATADO  H(7)=PAGADO  I(8)=POR PAGAR  J(9)=AHORRO
-// K(10)=REPROCESOS  L(11)=AMPLIACIONES  M(12)=SOBREGIROS  N(13)=SOBRECOSTO  O(14)=PROYECCION GLOBAL
+// Mapeo de columnas para SUBELEMENTOS (formato Excel mayo 2026)
+// A(0)=Subitems  B(1)=Name  C(2)=Codigo  D(3)=ESTADO  E(4)=PROVEEDOR  F(5)=ORIGEN
+// G(6)=CONTRATADO  H(7)=% ALCANCE CONTRATADO  I(8)=PAGADO  J(9)=POR PAGAR
+// Los subitems ya no traen sobrecosto/ahorro propios — esos viven solo en el renglón padre.
 const COL_SUB = {
-  blank: 0, name: 1, cod: 2, status: 3, proveedor: 4, razon: 5,
-  contratado: 6, estPagadas: 7, estPendientes: 8,
-  ahorro: 9,
-  error: 10, ocAmpliacion: 11, sobregiros: 12, sobrecosto: 13,
-  proyeccion: 14
+  blank: 0, name: 1, cod: 2, status: 3, proveedor: 4, origen: 5,
+  contratado: 6, alcance: 7, estPagadas: 8, estPendientes: 9
 };
 
 // ════════════════ COLUMN MAPPER ════════════════
@@ -1645,13 +1646,10 @@ const CONCEPTS = [
   { key: 'pendiente',        essential: true,  inSub: false, label: 'POR CONTRATAR',       desc: 'Monto pendiente de adjudicar, sin contrato ni OC. Indica riesgo de variación.', keywords: ['por contratar','pendiente contratar','sin contrato','por adjudicar','sin oc','pendiente adjudicar'] },
   { key: 'estPagadas',       essential: true,  inSub: true,  label: 'PAGADO',              desc: 'Total ya desembolsado (facturas o estimaciones pagadas). Salida real de caja.', keywords: ['pagado','pagadas','paid','desembolsado','estimaciones pagadas','facturado pagado'] },
   { key: 'estPendientes',    essential: true,  inSub: true,  label: 'POR PAGAR',           desc: 'Compromisos ejecutados o facturados, aún no pagados (cuentas por pagar).', keywords: ['por pagar','pendiente pago','cuentas por pagar','estimaciones pendientes','por cobrar','aprobado pendiente'] },
-  { key: 'ahorro',           essential: true,  inSub: true,  label: 'AHORRO',              desc: 'Diferencia positiva real cuando el costo contratado resulta menor que el presupuesto.', keywords: ['ahorro','saving','economia','ahorro real','economía','savings'] },
+  { key: 'ahorro',           essential: true,  inSub: false, label: 'AHORRO',              desc: 'Diferencia positiva real cuando el costo contratado resulta menor que el presupuesto.', keywords: ['ahorro','saving','economia','ahorro real','economía','savings'] },
   { key: 'ahorroProyectado', essential: false, inSub: false, label: 'AHORRO PROYECTADO',   desc: 'Ahorro estimado en partidas aún no contratadas, basado en tendencias del proyecto.', keywords: ['ahorro proyectado','saving projected','ahorro estimado','proyectado ahorro'] },
-  { key: 'error',            essential: false, inSub: true,  label: 'REPROCESOS',          desc: 'Costos por trabajos repetidos o corregidos por errores, cambios tardíos o mala coordinación.', keywords: ['reproceso','reprocesos','rework','error','corrección','retrabajo'] },
-  { key: 'ocAmpliacion',     essential: false, inSub: true,  label: 'AMPLIACIONES',        desc: 'Aumentos de alcance (obras adicionales) que incrementan el presupuesto vía orden de cambio.', keywords: ['ampliacion','ampliaciones','adicional','oc adicional','orden de cambio','cambio alcance','oc ampliacion'] },
-  { key: 'sobregiros',       essential: false, inSub: true,  label: 'SOBREGIROS',          desc: 'Ofertas con mayor precio que el presupuestado pero con mismo alcance, cantidades y especificaciones.', keywords: ['sobregiro','sobregiros','overrun','excedente precio'] },
-  { key: 'sobrecosto',       essential: true,  inSub: true,  label: 'SOBRECOSTO',          desc: 'Suma de reprocesos + ampliaciones + sobregiros. Variación desfavorable total.', keywords: ['sobrecosto','sobrecostos','cost overrun','costo adicional','variacion desfavorable','variación desfavorable'] },
-  { key: 'proyeccion',       essential: true,  inSub: true,  label: 'PROYECCIÓN GLOBAL',   desc: 'Estimación del costo final del proyecto (pagado + por pagar + por contratar + sobrecosto).', keywords: ['proyeccion','proyección','proyeccion global','proyección global','forecast','costo final','estimacion final','estimación final'] },
+  { key: 'sobrecosto',       essential: true,  inSub: false, label: 'SOBRECOSTO',          desc: 'Costo por encima del presupuesto. El origen se clasifica por el grupo del renglón: Notas de Cambio, Ordenes de Cambio, Reprocesos o Sobregiros (resto).', keywords: ['sobrecosto','sobrecostos','cost overrun','costo adicional','variacion desfavorable','variación desfavorable'] },
+  { key: 'proyeccion',       essential: true,  inSub: false, label: 'PPTO PROYECTADO',     desc: 'Estimación del costo final del proyecto (PPTO base ± variaciones reales).', keywords: ['ppto proyectado','presupuesto proyectado','proyeccion','proyección','proyeccion global','proyección global','forecast','costo final','estimacion final','estimación final'] },
 ];
 
 function normStr(s) {
@@ -1806,7 +1804,8 @@ function numOrZero(v) {
 function scaleData(data, mult) {
   if (!data) return data;
   const numFields = ['pptoBase','contratado','ahorro','ahorroDirecto','ahorroProyectado',
-    'pendiente','error','ocAmpliacion','sobregiros','sobrecosto','estPagadas','estPendientes','proyeccion'];
+    'pendiente','notasCambio','ocAmpliacion','error','sobregiros','sobrecosto',
+    'estPagadas','estPendientes','proyeccion'];
   const scaleObj = obj => {
     const out = Object.assign({}, obj);
     numFields.forEach(k => { if (k in obj) out[k] = (obj[k] || 0) * mult; });
@@ -1846,6 +1845,16 @@ function toggleIva() {
 
 function toggleUploader() {
   document.getElementById('uploader').classList.toggle('open');
+}
+
+function classifyGrupo(g) {
+  if (!g) return 'sobregiros';
+  const n = String(g).toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');
+  if (n.includes('reproceso')) return 'error';
+  if (n.includes('orden de cambio') || n.includes('ordenes de cambio')) return 'ocAmpliacion';
+  if (n.includes('nota de cambio') || n.includes('notas de cambio')) return 'notasCambio';
+  return 'sobregiros';
 }
 
 function parseMondayExcel(workbook) {
@@ -1905,20 +1914,22 @@ function parseMondayExcel(workbook) {
       const sub = {
         parentName: currentParent ? currentParent.name : '?',
         parentGrupo: currentParent ? currentParent.grupo : null,
-        proveedor: row[COL_SUB.proveedor] ? String(row[COL_SUB.proveedor]).trim() : '',
+        proveedor: row[resolveSubCol('proveedor')] ? String(row[resolveSubCol('proveedor')]).trim() : '',
+        origen:    row[resolveSubCol('origen')] ? String(row[resolveSubCol('origen')]).trim() : '',
         name: String(c1),
-        status: row[COL_SUB.status] || '',
+        status: row[resolveSubCol('status')] || '',
         pptoBase: 0,
         contratado:      numOrZero(row[scol('contratado')]),
-        ahorro:          numOrZero(row[scol('ahorro')]),
+        ahorro:          0,
         pendiente:       0,
-        error:           numOrZero(row[scol('error')]),
-        ocAmpliacion:    numOrZero(row[scol('ocAmpliacion')]),
-        sobregiros:      numOrZero(row[scol('sobregiros')]),
-        sobrecosto:      numOrZero(row[scol('sobrecosto')]),
+        notasCambio:     0,
+        ocAmpliacion:    0,
+        error:           0,
+        sobregiros:      0,
+        sobrecosto:      0,
         estPagadas:      numOrZero(row[scol('estPagadas')]),
         estPendientes:   numOrZero(row[scol('estPendientes')]),
-        proyeccion:      numOrZero(row[scol('proyeccion')])
+        proyeccion:      0
       };
       subitems.push(sub);
       if (currentParent) currentParent.subitems.push(sub);
@@ -1928,6 +1939,8 @@ function parseMondayExcel(workbook) {
     if (!isEmpty(c0) && isEmpty(c1)) {
       const ahorroDirecto = numOrZero(row[col('ahorro')]);
       const ahorroProy    = numOrZero(row[col('ahorroProyectado')]);
+      const sobrecostoVal = numOrZero(row[col('sobrecosto')]);
+      const origen = classifyGrupo(groupTitle);
       const item = {
         name:            String(c0).trim(),
         status: '', person: '',
@@ -1937,14 +1950,16 @@ function parseMondayExcel(workbook) {
         ahorroDirecto:   ahorroDirecto,
         ahorroProyectado: ahorroProy,
         pendiente:       numOrZero(row[col('pendiente')]),
-        error:           numOrZero(row[col('error')]),
-        ocAmpliacion:    numOrZero(row[col('ocAmpliacion')]),
-        sobregiros:      numOrZero(row[col('sobregiros')]),
-        sobrecosto:      numOrZero(row[col('sobrecosto')]),
+        notasCambio:     origen === 'notasCambio'  ? sobrecostoVal : 0,
+        ocAmpliacion:    origen === 'ocAmpliacion' ? sobrecostoVal : 0,
+        error:           origen === 'error'        ? sobrecostoVal : 0,
+        sobregiros:      origen === 'sobregiros'   ? sobrecostoVal : 0,
+        sobrecosto:      sobrecostoVal,
         estPagadas:      numOrZero(row[col('estPagadas')]),
         estPendientes:   numOrZero(row[col('estPendientes')]),
         proyeccion:      numOrZero(row[col('proyeccion')]),
         grupo: groupTitle,
+        origen,
         subitems: []
       };
       items.push(item);
@@ -1998,7 +2013,7 @@ function renderProveedores(data) {
 }
 
 function aggregate(items) {
-  const t = { pptoBase: 0, contratado: 0, ahorro: 0, ahorroDirecto: 0, ahorroProyectado: 0, pendiente: 0, error: 0, ocAmpliacion: 0, sobregiros: 0, sobrecosto: 0, estPagadas: 0, estPendientes: 0, proyeccion: 0 };
+  const t = { pptoBase: 0, contratado: 0, ahorro: 0, ahorroDirecto: 0, ahorroProyectado: 0, pendiente: 0, notasCambio: 0, ocAmpliacion: 0, error: 0, sobregiros: 0, sobrecosto: 0, estPagadas: 0, estPendientes: 0, proyeccion: 0 };
   items.forEach(it => Object.keys(t).forEach(k => { t[k] += it[k] || 0; }));
   return t;
 }
@@ -2257,12 +2272,13 @@ function renderSobrecostoCard(tCurr, tPrev) {
     txt.textContent = 'Sin cambio';
   }
 
-  // Breakdown: error, OC ampliación, sobregiros
+  // Breakdown: 4 orígenes (Notas de Cambio, Ordenes de Cambio, Reprocesos, Sobregiros)
   const detail = document.getElementById('sobrecostoDetail');
   detail.innerHTML = '';
   const rows = [
-    { label: 'Errores', value: tCurr.error, prev: tPrev.error, color: 'var(--red)' },
-    { label: 'OC Ampliación', value: tCurr.ocAmpliacion, prev: tPrev.ocAmpliacion, color: 'var(--orange)' },
+    { label: 'Notas de Cambio', value: tCurr.notasCambio, prev: tPrev.notasCambio, color: 'var(--accent)' },
+    { label: 'Ordenes de Cambio', value: tCurr.ocAmpliacion, prev: tPrev.ocAmpliacion, color: 'var(--orange)' },
+    { label: 'Reprocesos', value: tCurr.error, prev: tPrev.error, color: 'var(--red)' },
     { label: 'Sobregiros', value: tCurr.sobregiros, prev: tPrev.sobregiros, color: 'var(--amber)' }
   ];
   rows.forEach(r => {
@@ -2461,8 +2477,9 @@ function renderSobrecostoModal() {
       <th class="num">Sobrecosto actual</th>
       <th class="num">Sem. ant.</th>
       <th class="num">Δ</th>
-      <th class="num">Errores</th>
-      <th class="num">OC Ampl.</th>
+      <th class="num">Notas C.</th>
+      <th class="num">Ord. Cambio</th>
+      <th class="num">Reprocesos</th>
       <th class="num">Sobregiros</th>
     </tr></thead><tbody>`;
 
@@ -2476,14 +2493,15 @@ function renderSobrecostoModal() {
       name: it.name,
       curr: it.sobrecosto,
       prev: prev.sobrecosto || 0,
-      error: it.error,
+      notasCambio: it.notasCambio,
       ocAmpliacion: it.ocAmpliacion,
+      error: it.error,
       sobregiros: it.sobregiros
     });
   });
 
   Object.keys(byGrupo).forEach(grupo => {
-    html += `<tr class="grupo-row"><td colspan="7">${grupo}</td></tr>`;
+    html += `<tr class="grupo-row"><td colspan="8">${grupo}</td></tr>`;
     byGrupo[grupo].forEach(r => {
       const d = r.curr - r.prev;
       let dC = 'flat', dT = '=';
@@ -2494,8 +2512,9 @@ function renderSobrecostoModal() {
         <td class="num"><b style="color: var(--red);">${fmtQ(r.curr)}</b></td>
         <td class="num" style="color: var(--text-3);">${fmtQ(r.prev)}</td>
         <td class="num delta-cell ${dC}">${dT}</td>
-        <td class="num">${fmtQ(r.error)}</td>
+        <td class="num">${fmtQ(r.notasCambio)}</td>
         <td class="num">${fmtQ(r.ocAmpliacion)}</td>
+        <td class="num">${fmtQ(r.error)}</td>
         <td class="num">${fmtQ(r.sobregiros)}</td>
       </tr>`;
     });
@@ -2511,8 +2530,9 @@ function renderSobrecostoModal() {
     <td class="num">${fmtQ(tCurr.sobrecosto)}</td>
     <td class="num">${fmtQ(tPrev.sobrecosto)}</td>
     <td class="num delta-cell ${totDC}">${totDT}</td>
-    <td class="num">${fmtQ(tCurr.error)}</td>
+    <td class="num">${fmtQ(tCurr.notasCambio)}</td>
     <td class="num">${fmtQ(tCurr.ocAmpliacion)}</td>
+    <td class="num">${fmtQ(tCurr.error)}</td>
     <td class="num">${fmtQ(tCurr.sobregiros)}</td>
   </tr></tfoot></table>`;
   return html;
