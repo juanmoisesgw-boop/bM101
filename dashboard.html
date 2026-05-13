@@ -1462,6 +1462,20 @@
           <div class="breakdown-row">
             <span class="label-mini">
               <span class="dot" style="background: var(--green);"></span>
+              Ahorro
+            </span>
+            <span class="val-mini" id="ahorroDirectoVal">Q 0</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="label-mini">
+              <span class="dot" style="background: var(--green); opacity: 0.55;"></span>
+              Ahorro proyectado
+            </span>
+            <span class="val-mini" id="ahorroProyectadoVal">Q 0</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="label-mini">
+              <span class="dot" style="background: var(--green);"></span>
               Partidas con ahorro
             </span>
             <span class="val-mini">
@@ -2311,6 +2325,8 @@ function renderSobrecostoCard(tCurr, tPrev) {
 
 function renderAhorroCard(tCurr, tPrev, itemsCurr, itemsPrev) {
   document.getElementById('ahorroTotal').textContent = fmtFull(tCurr.ahorro);
+  document.getElementById('ahorroDirectoVal').textContent = fmtQ(tCurr.ahorroDirecto);
+  document.getElementById('ahorroProyectadoVal').textContent = fmtQ(tCurr.ahorroProyectado);
   const valEl = document.getElementById('ahorroValEl');
   valEl.classList.remove('muted', 'success', 'danger');
   valEl.classList.add(tCurr.ahorro > 0 ? 'success' : 'muted');
