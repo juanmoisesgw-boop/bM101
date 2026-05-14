@@ -466,6 +466,14 @@
     background: var(--surface-3); border-radius: 11px;
     overflow: hidden; display: flex;
   }
+  .progress-bar-empty {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700;
+    color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 1.2px;
+    pointer-events: none;
+  }
   .seg-pagado { background: linear-gradient(90deg, #10b981, #059669); }
   .seg-porpagar { background: linear-gradient(90deg, #facc15, #eab308); }
   .seg-sobrecosto { background: linear-gradient(90deg, #ef4444, #dc2626); }
@@ -1395,6 +1403,7 @@
           <div class="seg-porpagar" id="segPorPagar"></div>
           <div class="seg-sobrecosto" id="segSobrecosto"></div>
           <div class="seg-pendiente" id="segPendiente"></div>
+          <div class="progress-bar-empty" id="progressBarEmpty" style="display: none;">Sin impacto financiero</div>
         </div>
         <div class="baseline-marker">
           <div class="marker-tick" id="baselineMarkerTick">
@@ -2363,7 +2372,6 @@ function tryRender() {
 
 function renderBar(tCurr, tPrev) {
   const ppto = tCurr.pptoBase;
-  const proy = tCurr.proyeccion;
   const pagadas = tCurr.estPagadas;
   const pendEst = tCurr.estPendientes;
   const sobre = tCurr.sobrecosto;
@@ -2377,40 +2385,69 @@ function renderBar(tCurr, tPrev) {
   // pagar + lo que falta por contratar.
   const segSobreRojo = Math.min(pendEst, sobre);
   const segPorPagarAmar = Math.max(0, pendEst - segSobreRojo);
-  const barTotal = Math.max(ppto, pagadas + pendEst + pendCont);
+
+  const prevSobreRojo = Math.min(tPrev.estPendientes, tPrev.sobrecosto);
+  const prevPorPagarAmar = Math.max(0, tPrev.estPendientes - prevSobreRojo);
+
+  // La escala incluye también la semana anterior para que ambas
+  // barras compartan eje y se puedan comparar incluso cuando la
+  // semana actual no tiene datos.
+  const currSum = pagadas + pendEst + pendCont;
+  const prevSum = tPrev.estPagadas + tPrev.estPendientes + tPrev.pendiente;
+  const barTotal = Math.max(ppto, currSum, tPrev.pptoBase || 0, prevSum);
+
+  const currHasData = currSum > 0 || ppto > 0;
 
   document.getElementById('barScaleEnd').textContent = fmtQ(barTotal);
 
-  // Segmentos actuales
+  // Reset todos los segmentos primero — evita anchos obsoletos al
+  // cambiar de filtro a un grupo sin impacto financiero.
   const setSeg = (id, pct) => document.getElementById(id).style.width = pct + '%';
-  if (barTotal > 0) {
-    setSeg('segPagado',     (pagadas        / barTotal) * 100);
+  ['segPagado','segPorPagar','segSobrecosto','segPendiente',
+   'segPagadoPrev','segPorPagarPrev','segSobrecostoPrev','segPendientePrev'].forEach(id => setSeg(id, 0));
+
+  // Mensaje de empty-state en la barra actual
+  document.getElementById('progressBarEmpty').style.display = currHasData ? 'none' : 'flex';
+
+  // Segmentos actuales
+  if (barTotal > 0 && currHasData) {
+    setSeg('segPagado',     (pagadas         / barTotal) * 100);
     setSeg('segPorPagar',   (segPorPagarAmar / barTotal) * 100);
-    setSeg('segSobrecosto', (segSobreRojo   / barTotal) * 100);
-    setSeg('segPendiente',  (pendCont       / barTotal) * 100);
+    setSeg('segSobrecosto', (segSobreRojo    / barTotal) * 100);
+    setSeg('segPendiente',  (pendCont        / barTotal) * 100);
   }
 
-  // Marker PPTO base — tick siempre centrado, etiqueta ajusta su lado según posición
-  if (barTotal > 0) {
+  // Marker PPTO base — oculto cuando no hay presupuesto
+  const markerTick = document.getElementById('baselineMarkerTick');
+  const markerLbl = document.getElementById('baselineMarkerLbl');
+  if (ppto > 0 && barTotal > 0) {
+    markerTick.style.display = '';
+    markerLbl.style.display = '';
     const pctPos = (ppto / barTotal) * 100;
-    document.getElementById('baselineMarkerTick').style.left = pctPos + '%';
-    const lbl = document.getElementById('baselineMarkerLbl');
-    lbl.style.left = pctPos + '%';
-    lbl.style.transform = pctPos > 75 ? 'translateX(-100%)' : pctPos < 25 ? 'translateX(0)' : 'translateX(-50%)';
+    markerTick.style.left = pctPos + '%';
+    markerLbl.style.left = pctPos + '%';
+    markerLbl.style.transform = pctPos > 75 ? 'translateX(-100%)' : pctPos < 25 ? 'translateX(0)' : 'translateX(-50%)';
+  } else {
+    markerTick.style.display = 'none';
+    markerLbl.style.display = 'none';
   }
   document.getElementById('pptoBaseChip').textContent = fmtQ(ppto);
 
   // Barra semana anterior — misma lógica, mismo barTotal de escala
-  if (tPrev.proyeccion > 0 || tPrev.estPagadas > 0) {
-    const prevSobreRojo = Math.min(tPrev.estPendientes, tPrev.sobrecosto);
-    const prevPorPagarAmar = Math.max(0, tPrev.estPendientes - prevSobreRojo);
+  const prevHasData = prevSum > 0 || (tPrev.pptoBase || 0) > 0;
+  if (prevHasData) {
     document.getElementById('progressBarPrev').style.display = 'flex';
     document.getElementById('prevBarLabel').style.display = 'block';
     document.getElementById('prevBarTotal').textContent = fmtQ(tPrev.proyeccion);
-    setSeg('segPagadoPrev',     (tPrev.estPagadas / barTotal) * 100);
-    setSeg('segPorPagarPrev',   (prevPorPagarAmar / barTotal) * 100);
-    setSeg('segSobrecostoPrev', (prevSobreRojo    / barTotal) * 100);
-    setSeg('segPendientePrev',  (tPrev.pendiente  / barTotal) * 100);
+    if (barTotal > 0) {
+      setSeg('segPagadoPrev',     (tPrev.estPagadas  / barTotal) * 100);
+      setSeg('segPorPagarPrev',   (prevPorPagarAmar  / barTotal) * 100);
+      setSeg('segSobrecostoPrev', (prevSobreRojo     / barTotal) * 100);
+      setSeg('segPendientePrev',  (tPrev.pendiente   / barTotal) * 100);
+    }
+  } else {
+    document.getElementById('progressBarPrev').style.display = 'none';
+    document.getElementById('prevBarLabel').style.display = 'none';
   }
 
   // Legend values — coinciden con los segmentos de la barra
