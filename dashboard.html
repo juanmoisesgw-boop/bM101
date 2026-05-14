@@ -736,7 +736,7 @@
   .modal-head .close-btn:hover { background: var(--surface-3); color: var(--text); }
   .modal-body {
     padding: 20px 28px;
-    overflow-y: auto;
+    overflow: auto;
     flex: 1;
     min-height: 0;
   }
@@ -775,7 +775,12 @@
     background: var(--surface-2);
     position: sticky; top: 0; z-index: 2;
   }
-  table.detail th.num, table.detail td.num { text-align: right; font-feature-settings: 'tnum'; }
+  table.detail th.num, table.detail td.num {
+    text-align: right;
+    font-feature-settings: 'tnum';
+    white-space: nowrap;
+    min-width: 148px;
+  }
   table.detail td {
     padding: 13px 12px; border-bottom: 1px solid var(--surface-3);
     color: var(--text); font-size: 14px;
