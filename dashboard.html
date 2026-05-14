@@ -1412,13 +1412,13 @@
           </div>
           <div class="legend-item">
             <span class="swatch" style="background: linear-gradient(90deg, #facc15, #eab308);"></span>
-            <span class="lbl">Contratado por Pagar</span>
+            <span class="lbl">Por Pagar · en PPTO</span>
             <span class="val" id="legPorPagarVal">Q 0</span>
             <span class="pct" id="legPorPagarPct">0%</span>
           </div>
           <div class="legend-item">
             <span class="swatch" style="background: linear-gradient(90deg, #ef4444, #dc2626);"></span>
-            <span class="lbl">Sobrecosto</span>
+            <span class="lbl">Por Pagar · sobrecosto</span>
             <span class="val" id="legSobrecostoVal">Q 0</span>
             <span class="pct" id="legSobrecostoPct">0%</span>
           </div>
@@ -2369,18 +2369,25 @@ function renderBar(tCurr, tPrev) {
   const sobre = tCurr.sobrecosto;
   const pendCont = tCurr.pendiente;
 
-  // El total de la barra = max(proyección, suma de segmentos) — usamos proyección
-  const barTotal = Math.max(proy, ppto, pagadas + pendEst + sobre + pendCont);
+  // Nueva lógica: el "por pagar" se parte en dos
+  //   - rojo  (sobrecosto pendiente): porción de pendEst que excede el PPTO
+  //   - amar. (por pagar en PPTO)  : resto de pendEst
+  // Lo ya pagado se queda verde. Los ahorros no se incluyen porque
+  // no se desembolsan. Total de la barra = lo que realmente se va a
+  // pagar + lo que falta por contratar.
+  const segSobreRojo = Math.min(pendEst, sobre);
+  const segPorPagarAmar = Math.max(0, pendEst - segSobreRojo);
+  const barTotal = Math.max(ppto, pagadas + pendEst + pendCont);
 
   document.getElementById('barScaleEnd').textContent = fmtQ(barTotal);
 
   // Segmentos actuales
   const setSeg = (id, pct) => document.getElementById(id).style.width = pct + '%';
   if (barTotal > 0) {
-    setSeg('segPagado', (pagadas / barTotal) * 100);
-    setSeg('segPorPagar', (pendEst / barTotal) * 100);
-    setSeg('segSobrecosto', (sobre / barTotal) * 100);
-    setSeg('segPendiente', (pendCont / barTotal) * 100);
+    setSeg('segPagado',     (pagadas        / barTotal) * 100);
+    setSeg('segPorPagar',   (segPorPagarAmar / barTotal) * 100);
+    setSeg('segSobrecosto', (segSobreRojo   / barTotal) * 100);
+    setSeg('segPendiente',  (pendCont       / barTotal) * 100);
   }
 
   // Marker PPTO base — tick siempre centrado, etiqueta ajusta su lado según posición
@@ -2393,24 +2400,26 @@ function renderBar(tCurr, tPrev) {
   }
   document.getElementById('pptoBaseChip').textContent = fmtQ(ppto);
 
-  // Barra semana anterior — usar mismo barTotal de escala
+  // Barra semana anterior — misma lógica, mismo barTotal de escala
   if (tPrev.proyeccion > 0 || tPrev.estPagadas > 0) {
+    const prevSobreRojo = Math.min(tPrev.estPendientes, tPrev.sobrecosto);
+    const prevPorPagarAmar = Math.max(0, tPrev.estPendientes - prevSobreRojo);
     document.getElementById('progressBarPrev').style.display = 'flex';
     document.getElementById('prevBarLabel').style.display = 'block';
     document.getElementById('prevBarTotal').textContent = fmtQ(tPrev.proyeccion);
-    setSeg('segPagadoPrev', (tPrev.estPagadas / barTotal) * 100);
-    setSeg('segPorPagarPrev', (tPrev.estPendientes / barTotal) * 100);
-    setSeg('segSobrecostoPrev', (tPrev.sobrecosto / barTotal) * 100);
-    setSeg('segPendientePrev', (tPrev.pendiente / barTotal) * 100);
+    setSeg('segPagadoPrev',     (tPrev.estPagadas / barTotal) * 100);
+    setSeg('segPorPagarPrev',   (prevPorPagarAmar / barTotal) * 100);
+    setSeg('segSobrecostoPrev', (prevSobreRojo    / barTotal) * 100);
+    setSeg('segPendientePrev',  (tPrev.pendiente  / barTotal) * 100);
   }
 
-  // Legend values
+  // Legend values — coinciden con los segmentos de la barra
   document.getElementById('legContratadoVal').textContent = fmtQ(pagadas);
   document.getElementById('legContratadoPct').textContent = barTotal > 0 ? ((pagadas / barTotal) * 100).toFixed(2) + '%' : '0%';
-  document.getElementById('legPorPagarVal').textContent = fmtQ(pendEst);
-  document.getElementById('legPorPagarPct').textContent = barTotal > 0 ? ((pendEst / barTotal) * 100).toFixed(2) + '%' : '0%';
-  document.getElementById('legSobrecostoVal').textContent = fmtQ(sobre);
-  document.getElementById('legSobrecostoPct').textContent = barTotal > 0 ? ((sobre / barTotal) * 100).toFixed(2) + '%' : '0%';
+  document.getElementById('legPorPagarVal').textContent = fmtQ(segPorPagarAmar);
+  document.getElementById('legPorPagarPct').textContent = barTotal > 0 ? ((segPorPagarAmar / barTotal) * 100).toFixed(2) + '%' : '0%';
+  document.getElementById('legSobrecostoVal').textContent = fmtQ(segSobreRojo);
+  document.getElementById('legSobrecostoPct').textContent = barTotal > 0 ? ((segSobreRojo / barTotal) * 100).toFixed(2) + '%' : '0%';
   document.getElementById('legPendienteVal').textContent = fmtQ(pendCont);
   document.getElementById('legPendientePct').textContent = barTotal > 0 ? ((pendCont / barTotal) * 100).toFixed(2) + '%' : '0%';
 }
