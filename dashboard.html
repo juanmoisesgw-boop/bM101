@@ -478,6 +478,7 @@
   .seg-porpagar { background: linear-gradient(90deg, #facc15, #eab308); }
   .seg-sobrecosto { background: linear-gradient(90deg, #ef4444, #dc2626); }
   .seg-pendiente { background: var(--surface-3); border-left: 1px solid var(--border-strong); }
+  .seg-ahorro { background: linear-gradient(90deg, #3b82f6, #2563eb); }
 
   /* Barra semana anterior — discreta */
   .prev-bar {
@@ -1396,6 +1397,7 @@
           <div class="seg-porpagar" id="segPorPagarPrev"></div>
           <div class="seg-sobrecosto" id="segSobrecostoPrev"></div>
           <div class="seg-pendiente" id="segPendientePrev"></div>
+          <div class="seg-ahorro" id="segAhorroPrev"></div>
         </div>
         <div class="prev-bar-label" id="prevBarLabel" style="display: none;">Semana anterior · <span id="prevBarTotal">Q 0</span></div>
         <div class="progress-bar" id="progressBar">
@@ -1403,6 +1405,7 @@
           <div class="seg-porpagar" id="segPorPagar"></div>
           <div class="seg-sobrecosto" id="segSobrecosto"></div>
           <div class="seg-pendiente" id="segPendiente"></div>
+          <div class="seg-ahorro" id="segAhorro"></div>
           <div class="progress-bar-empty" id="progressBarEmpty" style="display: none;">Sin impacto financiero</div>
         </div>
         <div class="baseline-marker">
@@ -1436,6 +1439,12 @@
             <span class="lbl">Por Contratar</span>
             <span class="val" id="legPendienteVal">Q 0</span>
             <span class="pct" id="legPendientePct">0%</span>
+          </div>
+          <div class="legend-item" id="legAhorroItem" style="display: none;">
+            <span class="swatch" style="background: linear-gradient(90deg, #3b82f6, #2563eb);"></span>
+            <span class="lbl">Ahorro vs PPTO base</span>
+            <span class="val" id="legAhorroVal">Q 0</span>
+            <span class="pct" id="legAhorroPct">0%</span>
           </div>
         </div>
       </div>
@@ -2372,6 +2381,7 @@ function tryRender() {
 
 function renderBar(tCurr, tPrev) {
   const ppto = tCurr.pptoBase;
+  const proy = tCurr.proyeccion;
   const pagadas = tCurr.estPagadas;
   const pendEst = tCurr.estPendientes;
   const sobre = tCurr.sobrecosto;
@@ -2385,9 +2395,12 @@ function renderBar(tCurr, tPrev) {
   // pagar + lo que falta por contratar.
   const segSobreRojo = Math.min(pendEst, sobre);
   const segPorPagarAmar = Math.max(0, pendEst - segSobreRojo);
+  // Azul: gap entre proyección y PPTO base, solo cuando proy < ppto.
+  const segAhorroAzul = Math.max(0, ppto - proy);
 
   const prevSobreRojo = Math.min(tPrev.estPendientes, tPrev.sobrecosto);
   const prevPorPagarAmar = Math.max(0, tPrev.estPendientes - prevSobreRojo);
+  const prevAhorroAzul = Math.max(0, (tPrev.pptoBase || 0) - (tPrev.proyeccion || 0));
 
   // La escala incluye también la semana anterior para que ambas
   // barras compartan eje y se puedan comparar incluso cuando la
@@ -2403,8 +2416,8 @@ function renderBar(tCurr, tPrev) {
   // Reset todos los segmentos primero — evita anchos obsoletos al
   // cambiar de filtro a un grupo sin impacto financiero.
   const setSeg = (id, pct) => document.getElementById(id).style.width = pct + '%';
-  ['segPagado','segPorPagar','segSobrecosto','segPendiente',
-   'segPagadoPrev','segPorPagarPrev','segSobrecostoPrev','segPendientePrev'].forEach(id => setSeg(id, 0));
+  ['segPagado','segPorPagar','segSobrecosto','segPendiente','segAhorro',
+   'segPagadoPrev','segPorPagarPrev','segSobrecostoPrev','segPendientePrev','segAhorroPrev'].forEach(id => setSeg(id, 0));
 
   // Mensaje de empty-state en la barra actual
   document.getElementById('progressBarEmpty').style.display = currHasData ? 'none' : 'flex';
@@ -2415,6 +2428,7 @@ function renderBar(tCurr, tPrev) {
     setSeg('segPorPagar',   (segPorPagarAmar / barTotal) * 100);
     setSeg('segSobrecosto', (segSobreRojo    / barTotal) * 100);
     setSeg('segPendiente',  (pendCont        / barTotal) * 100);
+    setSeg('segAhorro',     (segAhorroAzul   / barTotal) * 100);
   }
 
   // Marker PPTO base — oculto cuando no hay presupuesto
@@ -2444,6 +2458,7 @@ function renderBar(tCurr, tPrev) {
       setSeg('segPorPagarPrev',   (prevPorPagarAmar  / barTotal) * 100);
       setSeg('segSobrecostoPrev', (prevSobreRojo     / barTotal) * 100);
       setSeg('segPendientePrev',  (tPrev.pendiente   / barTotal) * 100);
+      setSeg('segAhorroPrev',     (prevAhorroAzul    / barTotal) * 100);
     }
   } else {
     document.getElementById('progressBarPrev').style.display = 'none';
@@ -2459,6 +2474,14 @@ function renderBar(tCurr, tPrev) {
   document.getElementById('legSobrecostoPct').textContent = barTotal > 0 ? ((segSobreRojo / barTotal) * 100).toFixed(2) + '%' : '0%';
   document.getElementById('legPendienteVal').textContent = fmtQ(pendCont);
   document.getElementById('legPendientePct').textContent = barTotal > 0 ? ((pendCont / barTotal) * 100).toFixed(2) + '%' : '0%';
+  const legAhorroItem = document.getElementById('legAhorroItem');
+  if (segAhorroAzul > 0) {
+    legAhorroItem.style.display = '';
+    document.getElementById('legAhorroVal').textContent = fmtQ(segAhorroAzul);
+    document.getElementById('legAhorroPct').textContent = barTotal > 0 ? ((segAhorroAzul / barTotal) * 100).toFixed(2) + '%' : '0%';
+  } else {
+    legAhorroItem.style.display = 'none';
+  }
 }
 
 function renderSobrecostoCard(tCurr, tPrev) {
