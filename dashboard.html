@@ -1018,7 +1018,7 @@
   }
   .pie-modal-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(320px, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 32px;
     align-items: stretch;
     flex: 1;
@@ -1033,8 +1033,8 @@
   }
   .pie-modal-canvas-wrap canvas {
     display: block;
-    max-width: 100%;
-    max-height: 100%;
+    width: 100%;
+    height: 100%;
   }
   .pie-modal-center {
     position: absolute; inset: 0;
@@ -3168,6 +3168,7 @@ function renderPies(view) {
 }
 
 let pieModalCurrent = null;
+let pieModalResizeObserver = null;
 function openPieModal(type) {
   if (!dataCurr) return;
   let title, items, total, lblCenter;
@@ -3194,7 +3195,8 @@ function openPieModal(type) {
   document.getElementById('pieModalBackdrop').classList.add('active');
   // Esperar al layout para tamaños correctos
   requestAnimationFrame(() => {
-    drawPie(document.getElementById('pieModalCanvas'), items, { innerRatio: 0.55 });
+    const canvas = document.getElementById('pieModalCanvas');
+    drawPie(canvas, items, { innerRatio: 0.55 });
     const leg = document.getElementById('pieModalLegend');
     leg.innerHTML = items.map(r => `
       <div class="pie-modal-legend-item">
@@ -3204,12 +3206,21 @@ function openPieModal(type) {
         <span class="pct">${total > 0 ? ((r.value / total) * 100).toFixed(2) : '0'}%</span>
       </div>
     `).join('') || '<div style="padding: 24px; text-align:center; color: var(--text-3);">Sin datos</div>';
+    if (pieModalResizeObserver) pieModalResizeObserver.disconnect();
+    pieModalResizeObserver = new ResizeObserver(() => {
+      if (pieModalCurrent) drawPie(canvas, pieModalCurrent.items, { innerRatio: 0.55 });
+    });
+    pieModalResizeObserver.observe(canvas.parentElement);
   });
 }
 
 function closePieModal() {
   document.getElementById('pieModalBackdrop').classList.remove('active');
   pieModalCurrent = null;
+  if (pieModalResizeObserver) {
+    pieModalResizeObserver.disconnect();
+    pieModalResizeObserver = null;
+  }
 }
 function closePieModalOnBackdrop(e) {
   if (e.target.id === 'pieModalBackdrop') closePieModal();
