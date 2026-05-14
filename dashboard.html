@@ -1893,18 +1893,18 @@ function scaleData(data, mult) {
     numFields.forEach(k => { if (k in obj) out[k] = (obj[k] || 0) * mult; });
     return out;
   };
-  const stripProyectados = item => {
+  const zeroAllNumeric = obj => {
+    numFields.forEach(k => { if (k in obj) obj[k] = 0; });
+  };
+  const stripProyectadosItem = item => {
     if (item.origen === 'proyecciones') {
-      item.sobrecosto = 0;
-      item.proyecciones = 0;
-      item.ahorro = 0;
-      item.ahorroDirecto = 0;
-      item.ahorroProyectado = 0;
-      item.proyeccionesAhorro = 0;
+      zeroAllNumeric(item);
+      (item.subitems || []).forEach(zeroAllNumeric);
     } else {
       const ap = item.ahorroProyectado || 0;
       if (ap > 0) {
         item.ahorro = (item.ahorro || 0) - ap;
+        item.proyeccion = (item.proyeccion || 0) + ap;
         item.ahorroProyectado = 0;
         const key = (item.origen || '') + 'Ahorro';
         const buckets = ['notasCambioAhorro','ocAmpliacionAhorro','errorAhorro','sobregirosAhorro'];
@@ -1915,13 +1915,16 @@ function scaleData(data, mult) {
   const scaledSubMap = new Map();
   const subitems = data.subitems.map(s => {
     const scaled = scaleObj(s);
+    if (!proyectadosEnabled && classifyGrupo(s.parentGrupo) === 'proyecciones') {
+      zeroAllNumeric(scaled);
+    }
     scaledSubMap.set(s, scaled);
     return scaled;
   });
   const items = data.items.map(item => {
     const scaled = scaleObj(item);
     scaled.subitems = (item.subitems || []).map(s => scaledSubMap.get(s) || scaleObj(s));
-    if (!proyectadosEnabled) stripProyectados(scaled);
+    if (!proyectadosEnabled) stripProyectadosItem(scaled);
     return scaled;
   });
   return Object.assign({}, data, { items, subitems, totals: aggregate(items) });
