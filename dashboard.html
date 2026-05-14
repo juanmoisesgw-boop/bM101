@@ -2734,6 +2734,14 @@ function renderAhorroModal() {
         <div class="val" style="color: var(--green);">${fmtQ(tCurr.ahorro)}</div>
       </div>
       <div class="modal-summary-card">
+        <div class="lbl">Directo (col. Ahorro)</div>
+        <div class="val" style="color: var(--green);">${fmtQ(tCurr.ahorroDirecto)}</div>
+      </div>
+      <div class="modal-summary-card">
+        <div class="lbl">Proyectado</div>
+        <div class="val" style="color: var(--green); opacity: 0.7;">${fmtQ(tCurr.ahorroProyectado)}</div>
+      </div>
+      <div class="modal-summary-card">
         <div class="lbl">Sem. anterior</div>
         <div class="val" style="color: var(--text-2);">${fmtQ(tPrev.ahorro)}</div>
       </div>
@@ -2754,7 +2762,9 @@ function renderAhorroModal() {
       <th>Partida</th>
       <th class="num">PPTO Base</th>
       <th class="num">Contratado</th>
-      <th class="num">Ahorro actual</th>
+      <th class="num">Directo</th>
+      <th class="num">Proyectado</th>
+      <th class="num">Total actual</th>
       <th class="num">Sem. ant.</th>
       <th class="num">Δ</th>
     </tr></thead><tbody>`;
@@ -2768,22 +2778,32 @@ function renderAhorroModal() {
       name: it.name,
       pptoBase: it.pptoBase,
       contratado: it.contratado,
+      ahDir: it.ahorroDirecto || 0,
+      ahProy: it.ahorroProyectado || 0,
       ahC: it.ahorro,
       ahP: prev.ahorro || 0
     });
   });
 
   Object.keys(byParent).forEach(parent => {
-    html += `<tr class="grupo-row"><td colspan="6">${parent}</td></tr>`;
+    html += `<tr class="grupo-row"><td colspan="8">${parent}</td></tr>`;
     byParent[parent].forEach(r => {
       const d = r.ahC - r.ahP;
       let dC = 'flat', dT = '=';
       if (d > 0) { dC = 'down'; dT = '+' + fmtQ(d); }
       else if (d < 0) { dC = 'up'; dT = fmtQ(d); }
+      const dirCell = r.ahDir > 0
+        ? `<b style="color: #10b981;">${fmtQ(r.ahDir)}</b>`
+        : `<span style="color: var(--text-3);">—</span>`;
+      const proyCell = r.ahProy > 0
+        ? `<span style="color: #10b981; opacity: 0.7;">${fmtQ(r.ahProy)}</span>`
+        : `<span style="color: var(--text-3);">—</span>`;
       html += `<tr>
         <td>${r.name}</td>
         <td class="num">${fmtQ(r.pptoBase)}</td>
         <td class="num">${fmtQ(r.contratado)}</td>
+        <td class="num">${dirCell}</td>
+        <td class="num">${proyCell}</td>
         <td class="num"><b style="color: #10b981;">${fmtQ(r.ahC)}</b></td>
         <td class="num" style="color: var(--text-3);">${fmtQ(r.ahP)}</td>
         <td class="num delta-cell ${dC}">${dT}</td>
@@ -2796,6 +2816,8 @@ function renderAhorroModal() {
   else if (totD < 0) { totDC = 'up'; totDT = fmtQ(totD); }
   html += `<tfoot><tr>
     <td>Total</td><td class="num">—</td><td class="num">—</td>
+    <td class="num">${fmtQ(tCurr.ahorroDirecto)}</td>
+    <td class="num">${fmtQ(tCurr.ahorroProyectado)}</td>
     <td class="num">${fmtQ(tCurr.ahorro)}</td>
     <td class="num">${fmtQ(tPrev.ahorro)}</td>
     <td class="num delta-cell ${totDC}">${totDT}</td>
