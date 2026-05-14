@@ -146,6 +146,28 @@
     opacity: 1;
     background: rgba(120, 120, 120, 0.18);
   }
+  .usd-badge {
+    display: inline-flex; align-items: center;
+    padding: 6px 12px; border-radius: 6px;
+    background: rgba(20, 211, 154, 0.12);
+    border: 1px solid rgba(20, 211, 154, 0.4);
+    color: #14d39a;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.6px;
+    text-transform: uppercase;
+    font-feature-settings: 'tnum';
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s;
+    user-select: none;
+  }
+  .usd-badge:hover {
+    background: rgba(20, 211, 154, 0.22);
+    border-color: rgba(20, 211, 154, 0.7);
+  }
+  .usd-badge.usd-on {
+    background: rgba(20, 211, 154, 0.25);
+    border-color: rgba(20, 211, 154, 0.8);
+    color: #14d39a;
+  }
   .upload-toggle {
     background: var(--surface-2);
     border: 1px solid var(--border);
@@ -1231,6 +1253,7 @@
     <div class="topbar-right">
       <span class="iva-badge" id="ivaBadge" onclick="toggleIva()" title="IVA activo · haz clic para desactivar" aria-label="Activar/desactivar IVA">+ IVA 12%</span>
       <span class="proy-badge" id="proyBadge" onclick="toggleProyectados()" title="Montos proyectados incluidos · haz clic para excluir" aria-label="Incluir/excluir montos proyectados">+ Proyectados</span>
+      <span class="usd-badge" id="usdBadge" onclick="toggleUsd()" title="Mostrar en Quetzales · haz clic para cambiar a USD (tasa 7.80)" aria-label="Cambiar moneda Q/USD">Q · GTQ</span>
       <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="Cambiar tema (claro/oscuro)" aria-label="Cambiar tema">
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
@@ -1665,6 +1688,8 @@ let dataCurrFull = null;
 let activeGroup = '__ALL__';
 let ivaEnabled = true;
 let proyectadosEnabled = true;
+let usdEnabled = false;
+const USD_RATE = 7.8;
 let wbPrev = null, wbCurr = null;   // workbooks crudos para re-parsear
 let detectedHeaders = [];            // [{name, index}] cabeceras de elementos
 let detectedSubHeaders = [];         // [{name, index}] cabeceras de subelementos
@@ -1948,6 +1973,22 @@ function toggleIva() {
   if (dataPrevFull && dataCurrFull) tryRender();
 }
 
+function toggleUsd() {
+  usdEnabled = !usdEnabled;
+  const badge = document.getElementById('usdBadge');
+  if (usdEnabled) {
+    badge.classList.add('usd-on');
+    badge.textContent = '$ · USD';
+    badge.title = 'Mostrando en USD (tasa Q ' + USD_RATE.toFixed(2) + ' / USD) · haz clic para volver a Q';
+  } else {
+    badge.classList.remove('usd-on');
+    badge.textContent = 'Q · GTQ';
+    badge.title = 'Mostrando en Quetzales · haz clic para cambiar a USD (tasa ' + USD_RATE.toFixed(2) + ')';
+  }
+  document.querySelectorAll('.currency').forEach(el => { el.textContent = currencySym(); });
+  if (dataPrevFull && dataCurrFull) tryRender();
+}
+
 function toggleProyectados() {
   proyectadosEnabled = !proyectadosEnabled;
   const badge = document.getElementById('proyBadge');
@@ -2148,16 +2189,20 @@ function aggregate(items) {
   return t;
 }
 
+function currencySym() { return usdEnabled ? '$' : 'Q'; }
+
+function toCurrency(n) { return usdEnabled ? (n / USD_RATE) : n; }
+
 function fmtFull(n) {
   if (n === null || n === undefined || isNaN(n)) return '0.00';
-  return n.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return toCurrency(n).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function fmtQ(n) {
-  if (n === null || n === undefined || isNaN(n)) return 'Q 0.00';
+  if (n === null || n === undefined || isNaN(n)) return currencySym() + ' 0.00';
   const sign = n < 0 ? '-' : '';
-  const abs = Math.abs(n);
-  return sign + 'Q ' + abs.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const abs = Math.abs(toCurrency(n));
+  return sign + currencySym() + ' ' + abs.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function fmtDelta(n) {
