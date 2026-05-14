@@ -118,6 +118,34 @@
     opacity: 1;
     background: rgba(120, 120, 120, 0.18);
   }
+  .proy-badge {
+    display: inline-flex; align-items: center;
+    padding: 6px 12px; border-radius: 6px;
+    background: rgba(168, 85, 247, 0.12);
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    color: #a855f7;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.6px;
+    text-transform: uppercase;
+    font-feature-settings: 'tnum';
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s;
+    user-select: none;
+  }
+  .proy-badge:hover {
+    background: rgba(168, 85, 247, 0.22);
+    border-color: rgba(168, 85, 247, 0.7);
+  }
+  .proy-badge.proy-off {
+    background: rgba(120, 120, 120, 0.1);
+    border-color: rgba(120, 120, 120, 0.3);
+    color: var(--text-3);
+    text-decoration: line-through;
+    opacity: 0.7;
+  }
+  .proy-badge.proy-off:hover {
+    opacity: 1;
+    background: rgba(120, 120, 120, 0.18);
+  }
   .upload-toggle {
     background: var(--surface-2);
     border: 1px solid var(--border);
@@ -1202,6 +1230,7 @@
     </div>
     <div class="topbar-right">
       <span class="iva-badge" id="ivaBadge" onclick="toggleIva()" title="IVA activo · haz clic para desactivar" aria-label="Activar/desactivar IVA">+ IVA 12%</span>
+      <span class="proy-badge" id="proyBadge" onclick="toggleProyectados()" title="Montos proyectados incluidos · haz clic para excluir" aria-label="Incluir/excluir montos proyectados">+ Proyectados</span>
       <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="Cambiar tema (claro/oscuro)" aria-label="Cambiar tema">
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
@@ -1635,6 +1664,7 @@ let dataPrevFull = null;
 let dataCurrFull = null;
 let activeGroup = '__ALL__';
 let ivaEnabled = true;
+let proyectadosEnabled = true;
 let wbPrev = null, wbCurr = null;   // workbooks crudos para re-parsear
 let detectedHeaders = [];            // [{name, index}] cabeceras de elementos
 let detectedSubHeaders = [];         // [{name, index}] cabeceras de subelementos
@@ -1863,6 +1893,25 @@ function scaleData(data, mult) {
     numFields.forEach(k => { if (k in obj) out[k] = (obj[k] || 0) * mult; });
     return out;
   };
+  const stripProyectados = item => {
+    if (item.origen === 'proyecciones') {
+      item.sobrecosto = 0;
+      item.proyecciones = 0;
+      item.ahorro = 0;
+      item.ahorroDirecto = 0;
+      item.ahorroProyectado = 0;
+      item.proyeccionesAhorro = 0;
+    } else {
+      const ap = item.ahorroProyectado || 0;
+      if (ap > 0) {
+        item.ahorro = (item.ahorro || 0) - ap;
+        item.ahorroProyectado = 0;
+        const key = (item.origen || '') + 'Ahorro';
+        const buckets = ['notasCambioAhorro','ocAmpliacionAhorro','errorAhorro','sobregirosAhorro'];
+        if (buckets.includes(key) && item[key]) item[key] = Math.max(0, item[key] - ap);
+      }
+    }
+  };
   const scaledSubMap = new Map();
   const subitems = data.subitems.map(s => {
     const scaled = scaleObj(s);
@@ -1872,6 +1921,7 @@ function scaleData(data, mult) {
   const items = data.items.map(item => {
     const scaled = scaleObj(item);
     scaled.subitems = (item.subitems || []).map(s => scaledSubMap.get(s) || scaleObj(s));
+    if (!proyectadosEnabled) stripProyectados(scaled);
     return scaled;
   });
   return Object.assign({}, data, { items, subitems, totals: aggregate(items) });
@@ -1891,6 +1941,22 @@ function toggleIva() {
   }
   const banner = document.getElementById('ivaStatusBanner');
   if (banner) banner.textContent = ivaEnabled ? 'bM101 · con IVA 12%' : 'bM101 · sin IVA';
+  applyFilter();
+  if (dataPrevFull && dataCurrFull) tryRender();
+}
+
+function toggleProyectados() {
+  proyectadosEnabled = !proyectadosEnabled;
+  const badge = document.getElementById('proyBadge');
+  if (proyectadosEnabled) {
+    badge.classList.remove('proy-off');
+    badge.textContent = '+ Proyectados';
+    badge.title = 'Montos proyectados incluidos · haz clic para excluir';
+  } else {
+    badge.classList.add('proy-off');
+    badge.textContent = 'Sin proyectados';
+    badge.title = 'Montos proyectados excluidos (Ahorro proyectado + grupo Proyecciones) · haz clic para incluir';
+  }
   applyFilter();
   if (dataPrevFull && dataCurrFull) tryRender();
 }
