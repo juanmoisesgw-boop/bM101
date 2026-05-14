@@ -1514,7 +1514,7 @@
           <div class="breakdown-row">
             <span class="label-mini">
               <span class="dot" style="background: var(--green);"></span>
-              Ahorro
+              Ahorro confirmado
             </span>
             <span class="val-mini" id="ahorroDirectoVal">Q 0</span>
           </div>
@@ -1524,27 +1524,6 @@
               Ahorro proyectado
             </span>
             <span class="val-mini" id="ahorroProyectadoVal">Q 0</span>
-          </div>
-          <div class="breakdown-row">
-            <span class="label-mini">
-              <span class="dot" style="background: var(--accent);"></span>
-              Notas de Cambio
-            </span>
-            <span class="val-mini" id="ahorroNotasCambioVal">Q 0</span>
-          </div>
-          <div class="breakdown-row">
-            <span class="label-mini">
-              <span class="dot" style="background: var(--orange);"></span>
-              Ordenes de Cambio
-            </span>
-            <span class="val-mini" id="ahorroOCVal">Q 0</span>
-          </div>
-          <div class="breakdown-row">
-            <span class="label-mini">
-              <span class="dot" style="background: #a855f7;"></span>
-              Proyecciones
-            </span>
-            <span class="val-mini" id="ahorroProyeccionesVal">Q 0</span>
           </div>
           <div class="breakdown-row">
             <span class="label-mini">
@@ -2488,9 +2467,6 @@ function renderAhorroCard(tCurr, tPrev, itemsCurr, itemsPrev) {
   document.getElementById('ahorroTotal').textContent = fmtFull(tCurr.ahorro);
   document.getElementById('ahorroDirectoVal').textContent = fmtQ(tCurr.ahorroDirecto);
   document.getElementById('ahorroProyectadoVal').textContent = fmtQ(tCurr.ahorroProyectado);
-  document.getElementById('ahorroNotasCambioVal').textContent = fmtQ(tCurr.notasCambioAhorro);
-  document.getElementById('ahorroOCVal').textContent = fmtQ(tCurr.ocAmpliacionAhorro);
-  document.getElementById('ahorroProyeccionesVal').textContent = fmtQ(tCurr.proyeccionesAhorro);
   const valEl = document.getElementById('ahorroValEl');
   valEl.classList.remove('muted', 'success', 'danger');
   valEl.classList.add(tCurr.ahorro > 0 ? 'success' : 'muted');
@@ -2734,7 +2710,7 @@ function renderAhorroModal() {
         <div class="val" style="color: var(--green);">${fmtQ(tCurr.ahorro)}</div>
       </div>
       <div class="modal-summary-card">
-        <div class="lbl">Directo (col. Ahorro)</div>
+        <div class="lbl">Confirmado (col. Ahorro)</div>
         <div class="val" style="color: var(--green);">${fmtQ(tCurr.ahorroDirecto)}</div>
       </div>
       <div class="modal-summary-card">
@@ -2762,7 +2738,7 @@ function renderAhorroModal() {
       <th>Partida</th>
       <th class="num">PPTO Base</th>
       <th class="num">Contratado</th>
-      <th class="num">Directo</th>
+      <th class="num">Confirmado</th>
       <th class="num">Proyectado</th>
       <th class="num">Total actual</th>
       <th class="num">Sem. ant.</th>
