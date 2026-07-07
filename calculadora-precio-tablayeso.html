@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Precio Unitario — Muro de Tablayeso</title>
+<style>
+  :root{
+    --bg:#eef0ec;
+    --surface:#fbfbf9;
+    --surface-2:#f2f1ea;
+    --border:#d7d9d0;
+    --text:#20241f;
+    --text-muted:#5b665f;
+    --accent:#2e6f8e;
+    --accent-strong:#1f5670;
+    --accent-soft:#dfeaf0;
+    --warn:#b5762a;
+    --warn-soft:#f3e6d3;
+    --shadow: 0 1px 2px rgba(20,25,20,0.06), 0 8px 24px -12px rgba(20,25,20,0.18);
+    --radius: 10px;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, "SFMono-Regular", "Menlo", "Consolas", monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14171a;
+      --surface:#1b1f23;
+      --surface-2:#20252a;
+      --border:#30363b;
+      --text:#e7e6e1;
+      --text-muted:#9aa0a3;
+      --accent:#5ea3c4;
+      --accent-strong:#86c0dd;
+      --accent-soft:#1e3540;
+      --warn:#d99a52;
+      --warn-soft:#3a2f20;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 24px -12px rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14171a; --surface:#1b1f23; --surface-2:#20252a; --border:#30363b;
+    --text:#e7e6e1; --text-muted:#9aa0a3; --accent:#5ea3c4; --accent-strong:#86c0dd;
+    --accent-soft:#1e3540; --warn:#d99a52; --warn-soft:#3a2f20;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 24px -12px rgba(0,0,0,0.6);
+  }
+  :root[data-theme="light"]{
+    --bg:#eef0ec; --surface:#fbfbf9; --surface-2:#f2f1ea; --border:#d7d9d0;
+    --text:#20241f; --text-muted:#5b665f; --accent:#2e6f8e; --accent-strong:#1f5670;
+    --accent-soft:#dfeaf0; --warn:#b5762a; --warn-soft:#f3e6d3;
+    --shadow: 0 1px 2px rgba(20,25,20,0.06), 0 8px 24px -12px rgba(20,25,20,0.18);
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    line-height: 1.45;
+    padding: 28px 20px 80px;
+  }
+  a{ color: var(--accent-strong); }
+
+  .wrap{ max-width: 1180px; margin: 0 auto; }
+
+  /* Title block, evocador de un sello de plano técnico */
+  header.titleblock{
+    display:flex; flex-wrap:wrap; gap:16px 32px;
+    align-items:flex-end;
+    border-bottom: 2px solid var(--text);
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+  }
+  header.titleblock .name{ flex: 1 1 320px; min-width:260px; }
+  header.titleblock h1{
+    font-size: 26px;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  header.titleblock p.sub{
+    margin:0; color: var(--text-muted); font-size: 14px; max-width: 62ch;
+  }
+  .meta-fields{
+    display:flex; gap:22px; font-family: var(--font-mono); font-size:12px;
+    color: var(--text-muted); flex-wrap:wrap;
+  }
+  .meta-fields div span.lbl{ display:block; text-transform:uppercase; letter-spacing:.08em; font-size:10px; margin-bottom:2px; }
+  .meta-fields div span.val{ color: var(--text); font-size:13px; }
+
+  .layout{
+    display:grid;
+    grid-template-columns: minmax(0,1.15fr) minmax(300px, 0.85fr);
+    gap: 20px;
+    align-items:start;
+  }
+  @media (max-width: 880px){
+    .layout{ grid-template-columns: 1fr; }
+  }
+
+  .panel{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px 22px;
+  }
+  .panel + .panel{ margin-top: 18px; }
+
+  .panel h2{
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--text-muted);
+    margin: 0 0 16px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .panel h2 .n{
+    font-family: var(--font-mono);
+    color: var(--accent-strong);
+    background: var(--accent-soft);
+    border-radius: 5px;
+    padding: 1px 7px;
+    font-size: 11px;
+  }
+
+  .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+  .grid3{ display:grid; grid-template-columns: repeat(3,1fr); gap: 14px 16px; }
+  @media (max-width: 560px){ .grid2, .grid3{ grid-template-columns: 1fr; } }
+
+  label.field{ display:flex; flex-direction:column; gap:6px; font-size:13px; }
+  label.field span.lbl{ color: var(--text-muted); font-weight:600; }
+  label.field span.hint{ color: var(--text-muted); font-weight:400; font-size:11.5px; }
+
+  select, input[type="number"], input[type="text"]{
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 9px 10px;
+    width: 100%;
+  }
+  select:focus, input:focus{
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+    border-color: var(--accent);
+  }
+  input[type="number"]{ font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  details.adv{
+    border-top: 1px dashed var(--border);
+    margin-top: 18px;
+    padding-top: 14px;
+  }
+  details.adv summary{
+    cursor:pointer; font-size:13px; font-weight:600; color: var(--accent-strong);
+    list-style:none; display:flex; align-items:center; gap:6px;
+  }
+  details.adv summary::-webkit-details-marker{ display:none; }
+  details.adv summary::before{ content:"▸"; transition: transform .15s ease; }
+  details.adv[open] summary::before{ transform: rotate(90deg); }
+  details.adv .adv-body{ padding-top: 16px; }
+
+  .price-grid{ display:grid; grid-template-columns: repeat(2, 1fr); gap: 10px 16px; }
+  @media (max-width: 560px){ .price-grid{ grid-template-columns: 1fr; } }
+  .price-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:13px; padding:4px 0; }
+  .price-row span.k{ color: var(--text-muted); }
+  .price-row input{ width: 92px; text-align:right; }
+
+  .note{
+    background: var(--warn-soft);
+    border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--border));
+    color: var(--text);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    margin-top: 14px;
+  }
+  .note b{ color: var(--warn); }
+
+  /* Resultados */
+  .results{ position: sticky; top: 20px; }
+  .total-figure{
+    background: linear-gradient(180deg, var(--accent-soft), transparent 70%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px 18px;
+    box-shadow: var(--shadow);
+  }
+  .total-figure .lbl{
+    font-size:12px; text-transform:uppercase; letter-spacing:.08em; color: var(--text-muted);
+  }
+  .total-figure .num{
+    font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+    font-size: 40px; font-weight: 700; color: var(--accent-strong);
+    margin: 4px 0 2px; line-height:1;
+  }
+  .total-figure .num small{ font-size: 16px; font-weight:600; color: var(--text-muted); }
+  .total-figure .split{
+    display:flex; gap:18px; margin-top:12px; font-size:12.5px; color: var(--text-muted);
+    font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+  }
+  .total-figure .split b{ color: var(--text); display:block; font-size:14px; }
+
+  table.breakdown{ width:100%; border-collapse: collapse; font-size:13px; margin-top: 4px; }
+  table.breakdown th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.06em;
+    color: var(--text-muted); font-weight:600; padding: 6px 4px; border-bottom:1px solid var(--border);
+  }
+  table.breakdown th.num, table.breakdown td.num{ text-align:right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  table.breakdown td{ padding: 7px 4px; border-bottom: 1px solid var(--border); vertical-align:top; }
+  table.breakdown tr:last-child td{ border-bottom:none; }
+  table.breakdown tr.group td{ padding-top:14px; font-weight:700; color:var(--text-muted); font-size:11px; text-transform:uppercase; letter-spacing:.05em; border-bottom:none; }
+
+  .project-total{
+    margin-top:14px; padding-top:12px; border-top:1px dashed var(--border);
+    display:flex; align-items:center; justify-content:space-between; font-size:13px;
+  }
+  .project-total .num{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:18px; font-weight:700; color:var(--text); }
+
+  .btnrow{ display:flex; gap:10px; margin-top:16px; }
+  button{
+    font-family: var(--font-sans); font-size:13px; font-weight:600;
+    border-radius: 7px; padding: 9px 14px; cursor:pointer;
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+  }
+  button.primary{ background: var(--accent); border-color: var(--accent); color:#fff; }
+  button.primary:hover{ background: var(--accent-strong); }
+  button:hover{ filter: brightness(1.03); }
+  button:focus-visible, select:focus-visible, input:focus-visible{ outline: 2px solid var(--accent); outline-offset:2px; }
+
+  footer{ max-width:1180px; margin: 30px auto 0; color: var(--text-muted); font-size:12px; text-align:center; }
+
+  @media print{
+    body{ padding:0; background:#fff; }
+    button, details.adv summary, .btnrow{ display:none !important; }
+    details.adv{ display:none; }
+    .layout{ grid-template-columns: 1fr; }
+    .panel, .total-figure{ box-shadow:none; border-color:#999; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="titleblock">
+    <div class="name">
+      <h1>Calculadora de Precio Unitario — Muro de Tablayeso</h1>
+      <p class="sub">Estima el costo por m² de un sistema de muro liviano (estructura metálica + tablero de yeso), según tipo de estructura, calibre, tipo de tablero y nivel de acabado.</p>
+    </div>
+    <div class="meta-fields">
+      <div><span class="lbl">Referencia</span><span class="val">Sistemas Livianos — Tablayeso</span></div>
+      <div><span class="lbl">Moneda</span><span class="val">Q (Quetzales) — editable</span></div>
+      <div><span class="lbl">Uso</span><span class="val">Sin conexión / archivo local</span></div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- COLUMNA IZQUIERDA: FORMULARIO -->
+    <div>
+      <div class="panel">
+        <h2><span class="n">1</span>Estructura metálica</h2>
+        <div class="grid2">
+          <label class="field">
+            <span class="lbl">Tipo de estructura (ancho de poste)</span>
+            <select id="ancho">
+              <option value="1-5/8&quot;">1-5/8" (41 mm)</option>
+              <option value="2-1/2&quot;">2-1/2" (63 mm)</option>
+              <option value="3-5/8&quot;" selected>3-5/8" (92 mm)</option>
+              <option value="4&quot;">4" (102 mm)</option>
+              <option value="6&quot;">6" (152 mm)</option>
+            </select>
+          </label>
+          <label class="field">
+            <span class="lbl">Calibre de la estructura</span>
+            <select id="calibre">
+              <option value="26">Calibre 26 — liviano, no estructural</option>
+              <option value="25" selected>Calibre 25 — liviano reforzado</option>
+              <option value="22">Calibre 22 — semi-estructural</option>
+              <option value="20">Calibre 20 — estructural</option>
+            </select>
+          </label>
+        </div>
+
+        <details class="adv" open>
+          <summary>Opciones de la estructura</summary>
+          <div class="adv-body grid2">
+            <label class="field">
+              <span class="lbl">Espaciamiento entre postes</span>
+              <select id="espaciamiento">
+                <option value="0.406" selected>0.40 m (16")</option>
+                <option value="0.61">0.61 m (24")</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="lbl">Alto de muro (m)</span>
+              <input type="number" id="altoMuro" value="2.44" min="1" max="6" step="0.01">
+              <span class="hint">Afecta el consumo de canal superior/inferior por m².</span>
+            </label>
+          </div>
+        </details>
+      </div>
+
+      <div class="panel">
+        <h2><span class="n">2</span>Tablero (tablayeso)</h2>
+        <div class="grid2">
+          <label class="field">
+            <span class="lbl">Tipo de tablero</span>
+            <select id="tipoTablero">
+              <option value="regular" selected>Regular (estándar)</option>
+              <option value="rh">Resistente a Humedad (Anti-Moho)</option>
+              <option value="rf">Resistente al Fuego (Tipo X)</option>
+              <option value="cemento">Cemento (Exterior)</option>
+              <option value="ultralight">Ultralight</option>
+            </select>
+          </label>
+          <label class="field">
+            <span class="lbl">Espesor</span>
+            <select id="espesor"></select>
+          </label>
+        </div>
+
+        <details class="adv">
+          <summary>Opciones del tablero</summary>
+          <div class="adv-body grid2">
+            <label class="field">
+              <span class="lbl">Caras a forrar</span>
+              <select id="lados">
+                <option value="2" selected>2 caras (ambos lados)</option>
+                <option value="1">1 cara</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="lbl">Capas de tablero por cara</span>
+              <select id="capas">
+                <option value="1" selected>1 capa (sencillo)</option>
+                <option value="2">2 capas (doble)</option>
+              </select>
+            </label>
+          </div>
+        </details>
+      </div>
+
+      <div class="panel">
+        <h2><span class="n">3</span>Acabado de juntas</h2>
+        <div class="grid2">
+          <label class="field">
+            <span class="lbl">Nivel de acabado</span>
+            <select id="nivelAcabado">
+              <option value="3" selected>Nivel 3 — estándar (texturizado / pintura mate oscura)</option>
+              <option value="5">Nivel 5 — enlucido total (luz rasante, pintura brillante o clara)</option>
+            </select>
+          </label>
+          <label class="field">
+            <span class="lbl">Área del proyecto (m²) <span class="hint">— opcional</span></span>
+            <input type="number" id="areaProyecto" placeholder="Ej. 45" min="0" step="0.01">
+          </label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="n">4</span>Precios de referencia <span style="font-weight:400; text-transform:none; letter-spacing:0;">(editables)</span></h2>
+        <div class="note">
+          <b>Nota:</b>&nbsp;sistegua.com bloquea la lectura automática de precios (403), así que estos valores son <b>referencias estimadas</b> del mercado centroamericano, no un scrape en vivo. Ajusta cada campo con el precio real de tu sucursal o cotización vigente — el cálculo se actualiza al instante.
+        </div>
+        <details class="adv">
+          <summary>Editar tabla de precios</summary>
+          <div class="adv-body">
+            <div class="price-grid">
+              <div class="price-row"><span class="k">Poste base (Cal.25, 3-5/8", Q/pieza 3.05 m)</span><input type="number" id="p_poste" value="40"></div>
+              <div class="price-row"><span class="k">Canal base (Cal.25, 3-5/8", Q/pieza 3.05 m)</span><input type="number" id="p_canal" value="36"></div>
+              <div class="price-row"><span class="k">Tablero Regular 1/2" (Q/plancha 1.22×2.44 m)</span><input type="number" id="p_reg_12" value="70"></div>
+              <div class="price-row"><span class="k">Tablero Regular 5/8"</span><input type="number" id="p_reg_58" value="85"></div>
+              <div class="price-row"><span class="k">Tablero Anti-Moho 1/2"</span><input type="number" id="p_rh_12" value="130"></div>
+              <div class="price-row"><span class="k">Tablero Anti-Moho 5/8"</span><input type="number" id="p_rh_58" value="150"></div>
+              <div class="price-row"><span class="k">Tablero Resist. Fuego 5/8"</span><input type="number" id="p_rf_58" value="140"></div>
+              <div class="price-row"><span class="k">Tablero Cemento 1/2"</span><input type="number" id="p_cem_12" value="210"></div>
+              <div class="price-row"><span class="k">Tablero Cemento 5/8"</span><input type="number" id="p_cem_58" value="245"></div>
+              <div class="price-row"><span class="k">Tablero Ultralight 1/2"</span><input type="number" id="p_ul_12" value="90"></div>
+              <div class="price-row"><span class="k">Tornillo (Q/unidad)</span><input type="number" id="p_tornillo" value="0.18" step="0.01"></div>
+              <div class="price-row"><span class="k">Cinta de juntas (Q/ml)</span><input type="number" id="p_cinta" value="0.60" step="0.01"></div>
+              <div class="price-row"><span class="k">Pasta / compound (Q/kg)</span><input type="number" id="p_pasta" value="9"></div>
+              <div class="price-row"><span class="k">Desperdicio de material (%)</span><input type="number" id="p_desperdicio" value="10"></div>
+              <div class="price-row"><span class="k">M. de obra — estructura (Q/m²)</span><input type="number" id="p_mo_estructura" value="25"></div>
+              <div class="price-row"><span class="k">M. de obra — instalar tablero (Q/m² por capa/cara)</span><input type="number" id="p_mo_tablero" value="18"></div>
+              <div class="price-row"><span class="k">M. de obra — acabado Nivel 3 (Q/m² por cara)</span><input type="number" id="p_mo_n3" value="20"></div>
+              <div class="price-row"><span class="k">M. de obra — acabado Nivel 5 (Q/m² por cara)</span><input type="number" id="p_mo_n5" value="35"></div>
+            </div>
+            <div class="btnrow">
+              <button id="btnReset" type="button">Restaurar precios por defecto</button>
+            </div>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- COLUMNA DERECHA: RESULTADOS -->
+    <div class="results">
+      <div class="total-figure">
+        <div class="lbl">Precio unitario del muro</div>
+        <div class="num" id="totalM2">Q 0.00 <small>/ m²</small></div>
+        <div class="split">
+          <div><b id="subMateriales">Q 0.00</b>Materiales</div>
+          <div><b id="subManoObra">Q 0.00</b>Mano de obra</div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px;">
+        <h2>Desglose por m²</h2>
+        <table class="breakdown" id="tablaDesglose">
+          <thead>
+            <tr><th>Concepto</th><th class="num">Cant.</th><th class="num">P. Unit.</th><th class="num">Subtotal</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+
+        <div class="project-total" id="projectTotalRow" style="display:none;">
+          <span>Total del proyecto (<span id="areaEcho">0</span> m²)</span>
+          <span class="num" id="projectTotal">Q 0.00</span>
+        </div>
+
+        <div class="btnrow">
+          <button class="primary" type="button" onclick="window.print()">Imprimir / Guardar como PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Calculadora offline y autocontenida — no envía datos a ningún servidor. Precios de referencia, ajústalos a tu catálogo vigente.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var ANCHO_FACTOR = { '1-5/8"':0.70, '2-1/2"':0.85, '3-5/8"':1.00, '4"':1.10, '6"':1.45 };
+  var CALIBRE_FACTOR = { '26':1.00, '25':1.15, '22':1.40, '20':1.65 };
+  var LONGITUD_PERFIL = 3.05; // m, longitud estándar de poste/canal
+  var AREA_TABLERO = 1.22 * 2.44; // m² por plancha
+
+  var TABLERO_ESPESORES = {
+    regular:    { label:'Regular (estándar)', espesores: ['1/2"','5/8"'], precioIds: {'1/2"':'p_reg_12', '5/8"':'p_reg_58'} },
+    rh:         { label:'Resistente a Humedad (Anti-Moho)', espesores: ['1/2"','5/8"'], precioIds: {'1/2"':'p_rh_12', '5/8"':'p_rh_58'} },
+    rf:         { label:'Resistente al Fuego (Tipo X)', espesores: ['5/8"'], precioIds: {'5/8"':'p_rf_58'} },
+    cemento:    { label:'Cemento (Exterior)', espesores: ['1/2"','5/8"'], precioIds: {'1/2"':'p_cem_12', '5/8"':'p_cem_58'} },
+    ultralight: { label:'Ultralight', espesores: ['1/2"'], precioIds: {'1/2"':'p_ul_12'} }
+  };
+
+  var DEFAULT_PRICES = {
+    p_poste:40, p_canal:36, p_reg_12:70, p_reg_58:85, p_rh_12:130, p_rh_58:150,
+    p_rf_58:140, p_cem_12:210, p_cem_58:245, p_ul_12:90, p_tornillo:0.18,
+    p_cinta:0.60, p_pasta:9, p_desperdicio:10, p_mo_estructura:25,
+    p_mo_tablero:18, p_mo_n3:20, p_mo_n5:35
+  };
+
+  var $ = function(id){ return document.getElementById(id); };
+  var fmt = function(n){ return 'Q ' + n.toLocaleString('es-GT', {minimumFractionDigits:2, maximumFractionDigits:2}); };
+  var num = function(id){ return parseFloat($(id).value) || 0; };
+
+  function pobularEspesores(){
+    var tipo = $('tipoTablero').value;
+    var cfg = TABLERO_ESPESORES[tipo];
+    var sel = $('espesor');
+    var prevValue = sel.value;
+    sel.innerHTML = '';
+    cfg.espesores.forEach(function(e){
+      var opt = document.createElement('option');
+      opt.value = e; opt.textContent = e;
+      sel.appendChild(opt);
+    });
+    if (cfg.espesores.indexOf(prevValue) !== -1) sel.value = prevValue;
+  }
+
+  function calcular(){
+    var ancho = $('ancho').value;
+    var calibre = $('calibre').value;
+    var espaciamiento = parseFloat($('espaciamiento').value);
+    var altoMuro = Math.max(num('altoMuro'), 0.1);
+    var tipoTablero = $('tipoTablero').value;
+    var espesor = $('espesor').value;
+    var lados = parseInt($('lados').value, 10);
+    var capas = parseInt($('capas').value, 10);
+    var nivel = $('nivelAcabado').value;
+    var areaProyecto = num('areaProyecto');
+
+    var desperdicio = 1 + (num('p_desperdicio') / 100);
+
+    // --- 1. Estructura metálica ---
+    var anchoF = ANCHO_FACTOR[ancho];
+    var calF = CALIBRE_FACTOR[calibre];
+    var precioPosteUnit = num('p_poste') * anchoF * calF;
+    var precioCanalUnit = num('p_canal') * anchoF * calF;
+
+    // piezas por m² (aproximación continua, estándar para precio unitario/APU)
+    var piezasPoste = (1 / espaciamiento / LONGITUD_PERFIL) * desperdicio;
+    var piezasCanal = ((2 / altoMuro) / LONGITUD_PERFIL) * desperdicio;
+
+    var costoPoste = piezasPoste * precioPosteUnit;
+    var costoCanal = piezasCanal * precioCanalUnit;
+
+    // tornillos de estructura (poste-canal), independiente del tablero
+    var tornillosEstructura = 2.5;
+    var costoTornillosEstructura = tornillosEstructura * num('p_tornillo');
+
+    // --- 2. Tablero ---
+    var precioId = TABLERO_ESPESORES[tipoTablero].precioIds[espesor];
+    var precioTableroPlancha = precioId ? num(precioId) : 0;
+    var m2TableroPorM2Muro = capas * lados * desperdicio;
+    var planchasPorM2 = m2TableroPorM2Muro / AREA_TABLERO;
+    var costoTablero = planchasPorM2 * precioTableroPlancha;
+
+    // tornillos de tablero: consumo según espaciamiento
+    var tornillosPorM2PorCapa = espaciamiento <= 0.5 ? 12 : 9;
+    var tornillosTablero = tornillosPorM2PorCapa * capas * lados;
+    var costoTornillosTablero = tornillosTablero * num('p_tornillo');
+
+    var costoTornillos = costoTornillosEstructura + costoTornillosTablero;
+
+    // --- 3. Acabado de juntas ---
+    var mlCintaPorM2 = 1.05 * lados * (nivel === '5' ? 1.2 : 1.0);
+    var costoCinta = mlCintaPorM2 * num('p_cinta');
+
+    var kgPastaPorM2Cara = nivel === '5' ? 1.4 : 0.9;
+    var kgPasta = kgPastaPorM2Cara * lados;
+    var costoPasta = kgPasta * num('p_pasta');
+
+    // --- 4. Mano de obra ---
+    var moEstructura = num('p_mo_estructura') * (1 + (calF - 1) * 0.3);
+    var moTablero = num('p_mo_tablero') * capas * lados;
+    var precioAcabadoCara = nivel === '5' ? num('p_mo_n5') : num('p_mo_n3');
+    var moAcabado = precioAcabadoCara * lados;
+
+    var totalManoObra = moEstructura + moTablero + moAcabado;
+    var totalMateriales = costoPoste + costoCanal + costoTablero + costoTornillos + costoCinta + costoPasta;
+    var totalM2 = totalMateriales + totalManoObra;
+
+    // --- Render ---
+    $('totalM2').innerHTML = fmt(totalM2) + ' <small>/ m²</small>';
+    $('subMateriales').textContent = fmt(totalMateriales);
+    $('subManoObra').textContent = fmt(totalManoObra);
+
+    var filas = [
+      { grupo: 'Estructura metálica' },
+      { concepto: 'Poste ' + ancho + ' Cal.' + calibre, cant: piezasPoste.toFixed(2) + ' pza', punit: fmt(precioPosteUnit), sub: fmt(costoPoste) },
+      { concepto: 'Canal ' + ancho + ' Cal.' + calibre, cant: piezasCanal.toFixed(2) + ' pza', punit: fmt(precioCanalUnit), sub: fmt(costoCanal) },
+      { grupo: 'Tablero (' + TABLERO_ESPESORES[tipoTablero].label + ', ' + espesor + ')' },
+      { concepto: capas + ' capa(s) × ' + lados + ' cara(s)', cant: planchasPorM2.toFixed(2) + ' pl', punit: fmt(precioTableroPlancha), sub: fmt(costoTablero) },
+      { grupo: 'Fijación y juntas' },
+      { concepto: 'Tornillos', cant: (tornillosEstructura+tornillosTablero).toFixed(1) + ' un', punit: fmt(num('p_tornillo')), sub: fmt(costoTornillos) },
+      { concepto: 'Cinta de juntas', cant: mlCintaPorM2.toFixed(2) + ' ml', punit: fmt(num('p_cinta')), sub: fmt(costoCinta) },
+      { concepto: 'Pasta / compound (Nivel ' + nivel + ')', cant: kgPasta.toFixed(2) + ' kg', punit: fmt(num('p_pasta')), sub: fmt(costoPasta) },
+      { grupo: 'Mano de obra' },
+      { concepto: 'Instalación de estructura', cant: '1 m²', punit: fmt(moEstructura), sub: fmt(moEstructura) },
+      { concepto: 'Instalación de tablero', cant: '1 m²', punit: fmt(moTablero), sub: fmt(moTablero) },
+      { concepto: 'Acabado Nivel ' + nivel, cant: '1 m²', punit: fmt(moAcabado), sub: fmt(moAcabado) }
+    ];
+
+    var tbody = document.querySelector('#tablaDesglose tbody');
+    tbody.innerHTML = '';
+    filas.forEach(function(f){
+      var tr = document.createElement('tr');
+      if (f.grupo){
+        tr.className = 'group';
+        tr.innerHTML = '<td colspan="4">' + f.grupo + '</td>';
+      } else {
+        tr.innerHTML = '<td>' + f.concepto + '</td><td class="num">' + f.cant + '</td><td class="num">' + f.punit + '</td><td class="num">' + f.sub + '</td>';
+      }
+      tbody.appendChild(tr);
+    });
+
+    if (areaProyecto > 0){
+      $('projectTotalRow').style.display = 'flex';
+      $('areaEcho').textContent = areaProyecto.toLocaleString('es-GT');
+      $('projectTotal').textContent = fmt(totalM2 * areaProyecto);
+    } else {
+      $('projectTotalRow').style.display = 'none';
+    }
+  }
+
+  function resetPrecios(){
+    Object.keys(DEFAULT_PRICES).forEach(function(id){
+      var el = $(id);
+      if (el) el.value = DEFAULT_PRICES[id];
+    });
+    calcular();
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    pobularEspesores();
+    calcular();
+
+    document.querySelectorAll('select, input').forEach(function(el){
+      el.addEventListener('input', function(){
+        if (el.id === 'tipoTablero') pobularEspesores();
+        calcular();
+      });
+    });
+
+    $('btnReset').addEventListener('click', resetPrecios);
+  });
+})();
+</script>
+</body>
+</html>
